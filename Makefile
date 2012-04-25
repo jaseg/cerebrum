@@ -7,28 +7,16 @@
 #                customize the avrdude settings below first!
 
 # Microcontroller Type
-<<<<<<< HEAD
-MCU = atmega328p
-=======
-MCU = atmega328
->>>>>>> feeeea7... Converted to plain c. Added a makefile.
+MCU = atmega2560
 
 # Target file name (without extension).
 TARGET = cerebrum_firmware
 
 # Programming hardware: type avrdude -c ?
 # to get a full listing.
-<<<<<<< HEAD
-AVRDUDE_PROGRAMMER = stk500v1 
+AVRDUDE_PROGRAMMER = stk500v2 
 
-AVRDUDE_PORT = /dev/arduino0 -b 57600
-=======
-# AVRDUDE_PROGRAMMER = dapa
-AVRDUDE_PROGRAMMER = stk500v2       
-# AVRDUDE_PROGRAMMER = dt006
-
-AVRDUDE_PORT = /dev/ttyUSB0    # not really needed for usb 
->>>>>>> feeeea7... Converted to plain c. Added a makefile.
+AVRDUDE_PORT = /dev/ttyACM0 -b 115200
 
 ############# Don't need to change below here for most purposes  (Elliot)
 
@@ -40,21 +28,7 @@ OPT = s
 FORMAT = ihex
 
 # List C source files here. (C dependencies are automatically generated.)
-<<<<<<< HEAD
 SRC = $(TARGET).c uart.c
-=======
-SRC = $(TARGET).c
-
-# If there is more than one source file, append them above, or modify and
-# uncomment the following:
-#SRC += foo.c bar.c
-
-# You can also wrap lines by appending a backslash to the end of the line:
-#SRC += baz.c \
-#xyzzy.c
-
-
->>>>>>> feeeea7... Converted to plain c. Added a makefile.
 
 # List Assembler source files here.
 # Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -91,11 +65,7 @@ $(patsubst %,-I%,$(EXTRAINCDIRS))
 #CFLAGS += -std=c89
 #CFLAGS += -std=gnu89
 #CFLAGS += -std=c99
-<<<<<<< HEAD
-CFLAGS += -std=gnu99 -DF_CPU=16000000
-=======
-CFLAGS += -std=gnu99
->>>>>>> feeeea7... Converted to plain c. Added a makefile.
+CFLAGS += -std=gnu99 -DF_CPU=16000000UL
 
 
 
@@ -152,29 +122,6 @@ AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 # to submit bug reports.
 #AVRDUDE_FLAGS += -v -v
 
-<<<<<<< HEAD
-=======
-#Run while cable attached or don't
-AVRDUDE_FLAGS += -E reset #keep chip disabled while cable attached
-#AVRDUDE_FLAGS += -E noreset
-
-#AVRDUDE_WRITE_FLASH = -U lfuse:w:0x04:m #run with 8 Mhz clock
-
-#AVRDUDE_WRITE_FLASH = -U lfuse:w:0x21:m #run with 1 Mhz clock #default clock mode
-
-#AVRDUDE_WRITE_FLASH = -U lfuse:w:0x01:m #run with 1 Mhz clock no start up time
-
-# ---------------------------------------------------------------------------
-
-# Define directories, if needed.
-DIRAVR = c:/winavr
-DIRAVRBIN = $(DIRAVR)/bin
-DIRAVRUTILS = $(DIRAVR)/utils/bin
-DIRINC = .
-DIRLIB = $(DIRAVR)/avr/lib
-
-
->>>>>>> feeeea7... Converted to plain c. Added a makefile.
 # Define programs and commands.
 SHELL = sh
 
@@ -292,10 +239,7 @@ extcoff: $(TARGET).elf
 
 # Program the device.  
 program: $(TARGET).hex $(TARGET).eep
-<<<<<<< HEAD
-	./pokedtr
-=======
->>>>>>> feeeea7... Converted to plain c. Added a makefile.
+#	./pokedtr
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 
