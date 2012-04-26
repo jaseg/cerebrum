@@ -5,3 +5,6 @@
 *.o
 *.d
 *.swp
+*.elf
+*.map
+*.sym

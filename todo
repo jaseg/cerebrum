@@ -1,1 +1,2 @@
-software pwm
+analog switch matrix support
+pwm'ed large rgb matrix support (>= 100 LEDs)

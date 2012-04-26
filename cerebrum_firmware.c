@@ -14,9 +14,14 @@ int main(void){
 
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115201, F_CPU));
-    //software PWM init FIXME
-    DDRH |= 0x20;
-    PORTH |= 0x20;
+    //Stuff for the SWITCH
+    //DDRH |= 0x20;
+    //PORTH |= 0x20;
+    //s/w PWM
+    TCCR0B |= _BV(CS00);
+    TIMSK0 |= _BV(TOIE0);
+    DDRL = 0xFF; //PWM outputs
+    //The DDRs of the led matrix outputs are set in the mux loop.
     sei();
 }
 
@@ -32,8 +37,12 @@ int switch_debounce_timeout = 0;
 uint8_t mcnt = 0;
 uint8_t ccnt = 0;
 
+#define PWM_COUNT 8
 uint8_t pwm_cycle = 0;
-uint8_t pwm_val[4];
+uint8_t pwm_val[PWM_COUNT];
+#define INPUT_COUNT 12
+uint8_t debounce_timeouts[INPUT_COUNT];
+uint8_t switch_states[INPUT_COUNT];
 
 void swapBuffers(void){
     uint8_t* tmp = frameBuffer;
@@ -69,15 +78,21 @@ int parseHex(char* buf){
 
 void loop(){ //one frame
     static uint8_t escape_state = 0;
-    uint16_t receive_status = 1;
+    uint16_t receive_state = 1;
     //primitive somewhat messy state machine of the uart interface
     do{ //Always empty the receive buffer since there are _delay_xxs in the following code and thus this might not run all that often.
-        receive_status = uart_getc();
-        char c = receive_status&0xFF;
-        receive_status &= 0xFF00;
+        receive_state = uart_getc();
+        char c = receive_state&0xFF;
+        receive_state &= 0xFF00;
+        //escape code format:
+        // \\   - backslash
+        // \n   - newline
+        // \[x] - x
         //eats three commands: 's' (0x73) led value                     sets led number [led] to [value]
         //                     'b' (0x62) buffer buffer buffer buffer   sets the whole frame buffer
         //                     'a' (0x61) meter value                   sets analog meter number [meter] to [value]
+        //this device will utter a "'c' (0x63) num state" when switch [num] changes state to [state]
+        //commands are terminated by \n
         if(!receive_state){
             if(!escape_state){
                 receive_state |= 0x02;
@@ -98,7 +113,7 @@ void loop(){ //one frame
                 }
             }
         }
-        if(!receive_status){
+        if(!receive_state){
             switch(state){
                 case 0: //Do not assume anything about the variables used
                     switch(c){
@@ -132,30 +147,69 @@ void loop(){ //one frame
                     }
                     break;
                 case 5:
+                    if(c > PWM_COUNT)
+                        c = 0;
                     nbuf = c;
                     state = 6;
-                    if(nbuf >= 4) //prevent array overflows
-                        nbuf = 0;
                     break;
                 case 6:
                     pwm_val[(uint8_t) nbuf] = c;
                     state = 0;
             }
         }
-    }while(!receive_status);
+    }while(!receive_state);
     for(int i=0; i<8; i++){
         uint8_t Q = 0x80>>i; //select the currently active "row" of the matrix. On the protoboards I make, this actually corresponds to physical traces.
+        uint8_t DDRQ = 0xFF>>i; //This is supposed to be an optimization. It is untested and will probably not work.
         //de-packing of frame data: data is packed like this: [11111117][22222266][33333555][4444----]
         if(!(i&4))
             Q |= frameBuffer[i&3] >> i;
         else
             Q |= frameBuffer[i&3] & (0xFF << (i&3));
-        //equivalent to the code above: <== revisiting this, I'm not quite sure about this anymore.
-        //Q |= frameBuffer[i&3]>>(i&(0x30>>(i&4))) & (0xFF<<(i&(0x30>>(!i&4))));
-        PORTD &= 0x0F;
-        PORTD |= Q&0xF0;
-        PORTB &= 0xF0;
-        PORTB |= Q&0x0F;
+        DDRC = DDRQ;
+        PORTC = Q;
+        //PORTD &= 0x0F;
+        //PORTD |= Q&0xF0;
+        //PORTB &= 0xF0;
+        //PORTB |= Q&0x0F;
+        Q = 0x80>>i;
+        if(!(i&4))
+            Q |= frameBuffer[4+(i&3)] >> i;
+        else
+            Q |= frameBuffer[4+(i&3)] & (0xFF << (i&3));
+        DDRA = DDRQ;
+        PORTA = Q;
+        //PORTD &= 0x0F;
+        //PORTD |= Q&0xF0;
+        //PORTB &= 0xF0;
+        //PORTB |= Q&0x0F;
         _delay_ms(1); //Should result in >100Hz refresh rate
     }
+    switch_states[0] |= !!(PINH&0x02);
+    for(int i=0; i<INPUT_COUNT; i++){
+        debounce_timeouts[i]--;
+        //A #define for the debounce time would be great
+        if(debounce_timeouts[i] == 0){
+            uint8_t new_switch_state = switch_states[i]<<1;
+            if(!(switch_states[i]^new_switch_state)){
+                uart_putc('c');
+                uart_putc(i);
+                uart_putc(switch_states[i]&1);
+                debounce_timeouts[i] = 0xFF;
+                switch_states[i] = new_switch_state&3;
+            }
+        }
+    }
+}
+
+//Called every 256 cpu clks (i.e should not get overly long)
+ISR(TIMER0_OVF_vect){
+    pwm_cycle++;
+    //example code
+    uint8_t Q = 0;
+    //The following loop NEEDS to be unrolled.
+    for(uint8_t i=0; i<8; i++){
+        Q |= (pwm_val[i] > pwm_cycle)<<i;
+    }
+    PORTL = Q;
 }
