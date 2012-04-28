@@ -13,14 +13,12 @@ int main(void){
 }
 
 void setup(){
-    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115201, F_CPU));
-    //Stuff for the SWITCH
-    //DDRH |= 0x20;
-    //PORTH |= 0x20;
-    //s/w PWM
-    TCCR0B |= _BV(CS00);
+    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
+    //s/w "BCM"(<== "Binary Code Modulation") timer setup
+    TCCR0A |= _BV(WGM00)|_BV(WGM01);
+    TCCR0B |= _BV(CS02);
     TIMSK0 |= _BV(TOIE0);
-    DDRL = 0xFF; //PWM outputs
+    //FIXME set PWM output DDRs
     //The DDRs of the led matrix outputs are set in the mux loop.
     sei();
 }
@@ -37,10 +35,10 @@ int switch_debounce_timeout = 0;
 uint8_t mcnt = 0;
 uint8_t ccnt = 0;
 
-#define PWM_COUNT 8
+#define PWM_COUNT 5
 uint8_t pwm_cycle = 0;
 uint8_t pwm_val[PWM_COUNT];
-#define INPUT_COUNT 12
+#define INPUT_COUNT 0
 uint8_t debounce_timeouts[INPUT_COUNT];
 uint8_t switch_states[INPUT_COUNT];
 
@@ -76,6 +74,18 @@ int parseHex(char* buf){
     return result;
 }
 
+inline char hex_nibble(uint8_t data){
+    if(data<0xA)
+        return data+'0';
+    else
+        return data+'A'-0xA;
+}
+
+void put_hex(uint8_t data){
+    uart_putc(hex_nibble(data&15));
+    uart_putc(hex_nibble(data>>4));
+}
+
 void loop(){ //one frame
     static uint8_t escape_state = 0;
     uint16_t receive_state = 1;
@@ -91,14 +101,17 @@ void loop(){ //one frame
         //eats three commands: 's' (0x73) led value                     sets led number [led] to [value]
         //                     'b' (0x62) buffer buffer buffer buffer   sets the whole frame buffer
         //                     'a' (0x61) meter value                   sets analog meter number [meter] to [value]
+        //                     'r' (0x72)                               read the frame buffer
         //this device will utter a "'c' (0x63) num state" when switch [num] changes state to [state]
         //commands are terminated by \n
         if(!receive_state){
             if(!escape_state){
-                receive_state |= 0x02;
                 if(c == '\\'){
+                    receive_state |= 0x02;
                     escape_state = 1;
                 }else if(c == '\n'){
+                    receive_state |= 0x02;
+                    uart_puts_p(PSTR("ACK\n"));
                     state = 0;
                 }
             }else{
@@ -127,6 +140,13 @@ void loop(){ //one frame
                         case 'a':
                             state = 5;
                             nbuf = 0;
+                            break;
+                        case 'r':
+                            uart_putc('r');
+                            for(uint8_t i=0; i<sizeof(frameBuffer); i++){
+                                put_hex(frameBuffer[i]);
+                            }
+                            uart_putc('\n');
                             break;
                     }
                     break;
@@ -160,18 +180,40 @@ void loop(){ //one frame
     }while(!receive_state);
     for(int i=0; i<8; i++){
         uint8_t Q = 0x80>>i; //select the currently active "row" of the matrix. On the protoboards I make, this actually corresponds to physical traces.
-        uint8_t DDRQ = 0xFF>>i; //This is supposed to be an optimization. It is untested and will probably not work.
-        //de-packing of frame data: data is packed like this: [11111117][22222266][33333555][4444----]
+        //uint8_t DDRQ = 0xFF>>i; //This is supposed to be an optimization. It is untested and will probably not work.
+        uint8_t DDRQ = 0xFF; //Just for testing: reactivating the old behavioor
+        //unpacking of frame data: data is packed like this: [11111117][22222266][33333555][4444----]
         if(!(i&4))
             Q |= frameBuffer[i&3] >> i;
         else
             Q |= frameBuffer[i&3] & (0xFF << (i&3));
-        DDRC = DDRQ;
-        PORTC = Q;
-        //PORTD &= 0x0F;
-        //PORTD |= Q&0xF0;
-        //PORTB &= 0xF0;
-        //PORTB |= Q&0x0F;
+        //FIXME this whole mapping shit should be done in h/w!!1!
+        //FIXME this whole mapping is not even correct!!1!
+        // Q&0x01 ==> PG5
+        //     02 ==> PE3
+        //     04 ==> PH3
+        //     08 ==> PH4
+        //     10 ==> PH5
+        //     20 ==> PH6
+        //     40 ==> PB4
+        //     80 ==> PB5
+        DDRG&=~(1<<5);
+        DDRG|=(DDRQ&1)<<5;
+        PORTG&=~(1<<5);
+        PORTG|=(Q&1)<<5;
+        DDRE&=~(1<<3);
+        DDRE|=(DDRQ&2)<<2;
+        PORTE&=~(1<<3);
+        PORTE|=(Q&2)<<2;
+        DDRH&=0xC3;
+        DDRH|=(DDRQ&0x3C);
+        PORTH&=0xC3;
+        PORTH|=(Q&0x3C);
+        DDRB&=0xCF;
+        DDRB|=(DDRQ&0xC0)>>2;
+        PORTB&=0xCF;
+        PORTB|=(Q&0xC0)>>2;
+        /* second channel skeleton
         Q = 0x80>>i;
         if(!(i&4))
             Q |= frameBuffer[4+(i&3)] >> i;
@@ -183,8 +225,10 @@ void loop(){ //one frame
         //PORTD |= Q&0xF0;
         //PORTB &= 0xF0;
         //PORTB |= Q&0x0F;
-        _delay_ms(1); //Should result in >100Hz refresh rate
+        */
+        _delay_ms(1);
     }
+    /* no switches (yet)
     switch_states[0] |= !!(PINH&0x02);
     for(int i=0; i<INPUT_COUNT; i++){
         debounce_timeouts[i]--;
@@ -200,16 +244,20 @@ void loop(){ //one frame
             }
         }
     }
+    */
 }
 
 //Called every 256 cpu clks (i.e should not get overly long)
 ISR(TIMER0_OVF_vect){
-    pwm_cycle++;
-    //example code
     uint8_t Q = 0;
-    //The following loop NEEDS to be unrolled.
-    for(uint8_t i=0; i<8; i++){
-        Q |= (pwm_val[i] > pwm_cycle)<<i;
-    }
-    PORTL = Q;
+    Q |= (pwm_val[0] & pwm_cycle);
+    Q |= (pwm_val[1] & pwm_cycle)?2:0;
+    Q |= (pwm_val[2] & pwm_cycle)?4:0;
+    Q |= (pwm_val[3] & pwm_cycle)?8:0;
+    Q |= (pwm_val[4] & pwm_cycle)?16:0;
+    PORTC = Q;
+    OCR0A = pwm_cycle;
+    pwm_cycle<<=1;
+    if(!pwm_cycle)
+        pwm_cycle = 1;
 }
