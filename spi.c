@@ -19,7 +19,7 @@ void spi_end(){
 }
 
 void spi_setup(uint8_t config){
-    SPCR = config | _BV(SPE);
+    SPCR = config | _BV(SPE) | _BV(MSTR);
     if(config & _BV(SPE)){
         SPSR = _BV(SPE);
     }else{

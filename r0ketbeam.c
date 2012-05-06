@@ -36,6 +36,7 @@ int inc;
 
 void r0ketbeam_setup(void)
 {
+    nrf24_begin();
     nrf24_setDataRate(RF24_2MBPS);
     nrf24_setChannel(81);
     nrf24_setAutoAck(0);

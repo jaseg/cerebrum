@@ -11,6 +11,7 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 #include "uart.h"
+#include "r0ketbeam.h"
 
 void setup(void);
 void loop(void);
@@ -30,6 +31,7 @@ void setup(){
     */
     //FIXME set PWM output DDRs
     //The DDRs of the led matrix outputs are set in the mux loop.
+    r0ketbeam_setup();
     sei();
 }
 
@@ -239,6 +241,7 @@ void loop(){ //one frame
         */
         _delay_ms(1);
     }
+    r0ketbeam_loop();
     /* no switches (yet)
     switch_states[0] |= !!(PINH&0x02);
     for(int i=0; i<INPUT_COUNT; i++){

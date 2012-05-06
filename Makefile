@@ -381,29 +381,12 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 
 
 # ==> Programming support using avrdude. Settings and variables.
-#     Choose one of the following or use another one understood by avrdude.
-#
-# Programming hardware: alf avr910 avrisp bascom bsd
-#                       dt006 pavr picoweb pony-stk200 sp12 stk200 stk500
-#
-# Type: avrdude -c ?
-# to get a full listing.
-#
-AVRDUDE_PROGRAMMER = arduino
+AVRDUDE_PROGRAMMER = stk500v2 -b 115200
 # <==
 
 
 # ==> Choose the port used by the programmer
-#
-# Note: On Linux it may be necessary to extend the access to the device
-#       for normal users with a command like chmod 666 /dev/ttyS0 or by adding
-#       the user to a group like "dialout" by the administrative user (root).
-#       The correct group name (dialout or what ever) can be found with
-#       a command like: ls -l /dev/ttyS0
-#       The group name will be the word after "root" in the output.
-#       Of course replace /dev/ttyS0 with your device.
-#
-AVRDUDE_PORT = /dev/ttyACM0 -b 115200
+AVRDUDE_PORT = /dev/ttyACM0
 # <==
 
 
@@ -430,7 +413,7 @@ AVRDUDE_FLAGS = -p $(MCU) -P $(AVRDUDE_PORT) -c $(AVRDUDE_PROGRAMMER)
 AVRDUDE_FLAGS += $(AVRDUDE_NO_VERIFY)
 AVRDUDE_FLAGS += $(AVRDUDE_VERBOSE)
 AVRDUDE_FLAGS += $(AVRDUDE_ERASE_COUNTER)
-AVRDUDE_FLAGS += -E noreset
+#AVRDUDE_FLAGS += -E noreset
 
 
 
@@ -540,6 +523,7 @@ gccversion :
 
 # Program the device.
 program: $(TARGET).hex $(TARGET).eep
+	sh -c 'echo>/dev/ttyACM0'
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 
@@ -652,6 +636,7 @@ clean_list :
 	$(REMOVE) $(TARGET).lss
 	$(REMOVE) .deppp/*
 	$(REMOVE) *.bak  *.BAK *~ *.o *.s *.lst
+	$(REMOVE) RF24/*.o RF24/*.s RF24/*.lst
 
 
 
