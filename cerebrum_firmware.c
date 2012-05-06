@@ -1,3 +1,11 @@
+/*
+ Copyright (C) 2012 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
+
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
@@ -15,9 +23,11 @@ int main(void){
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
     //s/w "BCM"(<== "Binary Code Modulation") timer setup
+    /*
     TCCR0A |= _BV(WGM00)|_BV(WGM01);
     TCCR0B |= _BV(CS02);
     TIMSK0 |= _BV(TOIE0);
+    */
     //FIXME set PWM output DDRs
     //The DDRs of the led matrix outputs are set in the mux loop.
     sei();
@@ -111,7 +121,6 @@ void loop(){ //one frame
                     escape_state = 1;
                 }else if(c == '\n'){
                     receive_state |= 0x02;
-                    uart_puts_p(PSTR("ACK\n"));
                     state = 0;
                 }
             }else{
@@ -129,6 +138,7 @@ void loop(){ //one frame
         if(!receive_state){
             switch(state){
                 case 0: //Do not assume anything about the variables used
+                    //command char
                     switch(c){
                         case 's':
                             state = 2;
@@ -189,6 +199,7 @@ void loop(){ //one frame
             Q |= frameBuffer[i&3] & (0xFF << (i&3));
         //FIXME this whole mapping shit should be done in h/w!!1!
         //FIXME this whole mapping is not even correct!!1!
+        //FIXME IT DOES NOT WORK!!1!
         // Q&0x01 ==> PG5
         //     02 ==> PE3
         //     04 ==> PH3
@@ -247,6 +258,7 @@ void loop(){ //one frame
     */
 }
 
+//Software PWM stuff
 //Called every 256 cpu clks (i.e should not get overly long)
 ISR(TIMER0_OVF_vect){
     uint8_t Q = 0;
