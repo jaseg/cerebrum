@@ -173,7 +173,7 @@ void r0ketbeam_loop(void)
             inc = 0;
         }
         uart_putc('.');
-        _delay_ms(100);
+        //_delay_ms(100);
 #endif
     }
 }
