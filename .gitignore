@@ -5,7 +5,10 @@
 *.o
 *.d
 *.swp
+*.swo
+*.swn
 *.elf
 *.map
 *.sym
+RF24
 tmp
