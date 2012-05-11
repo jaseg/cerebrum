@@ -17,7 +17,7 @@ void uart_puthex_nibble(uint8_t nibble){
 }
 
 void uart_puthex(uint8_t data){
-    uart_puthex_nibble(data>4);
+    uart_puthex_nibble(data>>4);
     uart_puthex_nibble(data&0xF);
 }
 
