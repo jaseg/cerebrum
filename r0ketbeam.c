@@ -156,6 +156,8 @@ void r0ketbeam_loop(void)
         uart_putc('(');
         uart_putdec(buf.strength);
         uart_putc(')');
+        uart_putc(' ');
+        uart_puthex(buf.protocol);
         uart_putc('\n');
 
         uint16_t crc = flip16(crc16((uint8_t*)&buf, sizeof(buf)-2));
