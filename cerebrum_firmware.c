@@ -12,23 +12,24 @@
 #include <avr/interrupt.h>
 #include "uart.h"
 #include "r0ketbeam.h"
+#include "util.h"
+#include "7seg.h"
 
 void setup(void);
 void loop(void);
 
 int main(void){
     setup();
+    7seg_setup();
     for(;;) loop();
 }
 
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
     //s/w "BCM"(<== "Binary Code Modulation") timer setup
-    /*
     TCCR0A |= _BV(WGM00)|_BV(WGM01);
     TCCR0B |= _BV(CS02);
     TIMSK0 |= _BV(TOIE0);
-    */
     //FIXME set PWM output DDRs
     //The DDRs of the led matrix outputs are set in the mux loop.
     r0ketbeam_setup();
@@ -41,6 +42,7 @@ uint8_t _secondFrameBuffer[] = {0,0,0,0};
 uint8_t* frameBuffer = _frameBuffer;
 uint8_t* secondFrameBuffer = _secondFrameBuffer;
 char nbuf;
+char bpos;
 int state = 0;
 uint8_t switch_last_state = 0;
 int switch_debounce_timeout = 0;
@@ -50,7 +52,7 @@ uint8_t ccnt = 0;
 #define PWM_COUNT 5
 uint8_t pwm_cycle = 0;
 uint8_t pwm_val[PWM_COUNT];
-#define INPUT_COUNT 0
+#define INPUT_COUNT 1
 uint8_t debounce_timeouts[INPUT_COUNT];
 uint8_t switch_states[INPUT_COUNT];
 
@@ -114,6 +116,7 @@ void loop(){ //one frame
         //                     'b' (0x62) buffer buffer buffer buffer   sets the whole frame buffer
         //                     'a' (0x61) meter value                   sets analog meter number [meter] to [value]
         //                     'r' (0x72)                               read the frame buffer
+        //                     'd' (0x64) digit digit digit digit       sets the 7-segment display
         //this device will utter a "'c' (0x63) num state" when switch [num] changes state to [state]
         //commands are terminated by \n
         if(!receive_state){
@@ -160,6 +163,10 @@ void loop(){ //one frame
                             }
                             uart_putc('\n');
                             break;
+                        case 'd':
+                            nbuf = 0;
+                            bpos = 0;
+                            state = 7;
                     }
                     break;
                 case 2:
@@ -187,6 +194,18 @@ void loop(){ //one frame
                 case 6:
                     pwm_val[(uint8_t) nbuf] = c;
                     state = 0;
+                    break;
+                case 7:
+                    nbuf = c;
+                    state = 8;
+                    break;
+                case 8:
+                    7seg_buf[nbuf][bpos] = c;
+                    bpos++;
+                    if(bpos == 4){
+                        state = 0;
+                    }
+                    break;
             }
         }
     }while(!receive_state);
@@ -241,9 +260,7 @@ void loop(){ //one frame
         */
         _delay_ms(1);
     }
-    r0ketbeam_loop();
-    /* no switches (yet)
-    switch_states[0] |= !!(PINH&0x02);
+    //switch_states[0] |= !!(PINH&0x02);
     for(int i=0; i<INPUT_COUNT; i++){
         debounce_timeouts[i]--;
         //A #define for the debounce time would be great
@@ -251,14 +268,15 @@ void loop(){ //one frame
             uint8_t new_switch_state = switch_states[i]<<1;
             if(!(switch_states[i]^new_switch_state)){
                 uart_putc('c');
-                uart_putc(i);
-                uart_putc(switch_states[i]&1);
+                uart_puthex(i);
+                uart_puthex(switch_states[i]&1);
                 debounce_timeouts[i] = 0xFF;
                 switch_states[i] = new_switch_state&3;
             }
         }
     }
-    */
+    r0ketbeam_loop();
+    7seg_loop();
 }
 
 //Software PWM stuff
@@ -273,6 +291,7 @@ ISR(TIMER0_OVF_vect){
     PORTC = Q;
     OCR0A = pwm_cycle;
     pwm_cycle<<=1;
-    if(!pwm_cycle)
+    if(!pwm_cycle){
         pwm_cycle = 1;
+    }
 }

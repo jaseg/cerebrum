@@ -6,6 +6,6 @@
 void 7seg_setup(void);
 void 7seg_loop(void);
 
-uint8_t 7seg_buf[4];
+uint8_t 7seg_buf[1] = {char[4]};
 
 #endif//__7SEG_H__

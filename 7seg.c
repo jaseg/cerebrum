@@ -3,27 +3,36 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include "uart.h"
+#include "7seg_config.h"
 
 void 7seg_setup(){
-    DDRB=0x0F;
-    sei();
+    7SEG_CLK_DDR |= _BV(7SEG_CLK_PIN);
+    7SEG_DATA_DDR |= _BV(7SEG_DATA_PIN);
+    7SEG_DIGIT1_DDR |= _BV(7SEG_DIGIT1_PIN);
+    7SEG_DIGIT2_DDR |= _BV(7SEG_DIGIT2_PIN);
 }
 
 inline void 7seg_pulse_clk(){
-    PORTB |= 0x04;
-    PORTB &= 0xFB;
+    7SEG_CLK_PORT |= _BV(7SEG_CLK_PIN);
+    7SEG_CLK_PORT &= ~_BV(7SEG_CLK_PIN);
 }
 
 inline void 7seg_data_out(uint8_t val){
-    PORTB &= 0xF7;
+    7SEG_DATA_PORT &= ~_BV(7SEG_DATA_PIN);
     if(!val){
-        PORTB |= 0x08;
+        7SEG_DATA_PORT |= _BV(7SEG_DATA_PIN);
     }
 }
 
 inline void 7seg_select_digit(uint8_t digit){
-    PORTB &= 0xFC;
-    PORTB |= digit&3;
+    7SEG_DIGIT1_PORT &= ~_BV(7SEG_DIGIT1_PIN);
+    7SEG_DIGIT2_PORT &= ~_BV(7SEG_DIGIT2_PIN);
+    if(digit&1){ 
+        7SEG_DIGIT1_PORT |= _BV(7SEG_DIGIT1_PIN);
+    }
+    if(digit&2){
+        7SEG_DIGIT2_PORT |= _BV(7SEG_DIGIT2_PIN);
+    }
 }
 
 int 7seg_cycle=1;
