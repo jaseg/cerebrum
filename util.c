@@ -60,3 +60,22 @@ void uart_putdec(uint8_t data){
     uart_putc('0'+d2);
     uart_putc('0'+data);
 }
+
+int parseHex(char* buf){
+    int result = 0;
+    int len = 2;
+    for(int i=0; i<len; i++){
+        char c = buf[len-i];
+        int v = 0;
+        if(c>='0' && c<='9'){
+            v=(c-'0');
+        }else if(c>='a' && c<= 'f'){
+            v=(c-'a'+10);
+        }else if(c>='A' && c<= 'F'){
+            v=(c-'A'+10);
+        }
+        result |= v<<(4*i);
+    }
+    return result;
+}
+

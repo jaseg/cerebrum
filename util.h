@@ -17,6 +17,7 @@ void uart_puthex_32(uint32_t data);
 void uart_puthex_flip_16(uint16_t data);
 void uart_puthex_flip_32(uint32_t data);
 void uart_putdec(uint8_t data);
+int parseHex(char* buf);
 inline uint8_t min(uint8_t a, uint8_t b){
     return a>b?b:a;
 }

@@ -20,19 +20,25 @@ void loop(void);
 
 int main(void){
     setup();
-    7seg_setup();
     for(;;) loop();
 }
 
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
-    //s/w "BCM"(<== "Binary Code Modulation") timer setup
-    TCCR0A |= _BV(WGM00)|_BV(WGM01);
-    TCCR0B |= _BV(CS02);
-    TIMSK0 |= _BV(TOIE0);
-    //FIXME set PWM output DDRs
     //The DDRs of the led matrix outputs are set in the mux loop.
+#ifdef HAS_PWM_SUPPORT
+    pwm_setup();
+#endif//HAS_PWM_SUPPORT
+#ifdef HAS_7SEG_SUPPORT
+    7seg_setup();
+#endif//HAS_7SEG_SUPPORT
+#ifdef HAS_R0KETBEAM_SUPPORT
     r0ketbeam_setup();
+#endif//HAS_R0KETBEAM_SUPPORT
+#ifdef HAS_INPUT_SUPPORT
+    input_setup();
+#endif//HAS_INPUT_SUPPORT
+    //7seg_setup();
     sei();
 }
 
@@ -41,20 +47,10 @@ uint8_t _frameBuffer[] = {0,0,0,0};
 uint8_t _secondFrameBuffer[] = {0,0,0,0};
 uint8_t* frameBuffer = _frameBuffer;
 uint8_t* secondFrameBuffer = _secondFrameBuffer;
+
 char nbuf;
 char bpos;
 int state = 0;
-uint8_t switch_last_state = 0;
-int switch_debounce_timeout = 0;
-uint8_t mcnt = 0;
-uint8_t ccnt = 0;
-
-#define PWM_COUNT 5
-uint8_t pwm_cycle = 0;
-uint8_t pwm_val[PWM_COUNT];
-#define INPUT_COUNT 1
-uint8_t debounce_timeouts[INPUT_COUNT];
-uint8_t switch_states[INPUT_COUNT];
 
 void swapBuffers(void){
     uint8_t* tmp = frameBuffer;
@@ -68,36 +64,6 @@ void setLED(int num, int val){
         if(val)
             frameBuffer[num>>3] |= 1<<(num&7);
     }
-}
-
-int parseHex(char* buf){
-    int result = 0;
-    int len = 2;
-    for(int i=0; i<len; i++){
-        char c = buf[len-i];
-        int v = 0;
-        if(c>='0' && c<='9'){
-            v=(c-'0');
-        }else if(c>='a' && c<= 'f'){
-            v=(c-'a'+10);
-        }else if(c>='A' && c<= 'F'){
-            v=(c-'A'+10);
-        }
-        result |= v<<(4*i);
-    }
-    return result;
-}
-
-inline char hex_nibble(uint8_t data){
-    if(data<0xA)
-        return data+'0';
-    else
-        return data+'A'-0xA;
-}
-
-void put_hex(uint8_t data){
-    uart_putc(hex_nibble(data&15));
-    uart_putc(hex_nibble(data>>4));
 }
 
 void loop(){ //one frame
@@ -152,10 +118,12 @@ void loop(){ //one frame
                             nbuf = 0;
                             state = 4;
                             break;
+#ifdef HAS_PWM_SUPPORT
                         case 'a':
                             state = 5;
                             nbuf = 0;
                             break;
+#endif//HAS_PWM_SUPPORT
                         case 'r':
                             uart_putc('r');
                             for(uint8_t i=0; i<sizeof(frameBuffer); i++){
@@ -163,10 +131,12 @@ void loop(){ //one frame
                             }
                             uart_putc('\n');
                             break;
+#ifdef HAS_7SEG_SUPPORT
                         case 'd':
                             nbuf = 0;
                             bpos = 0;
                             state = 7;
+#endif//HAS_7SEG_SUPPORT
                     }
                     break;
                 case 2:
@@ -185,6 +155,7 @@ void loop(){ //one frame
                         state = 0;
                     }
                     break;
+#ifdef HAS_PWM_SUPPORT
                 case 5:
                     if(c > PWM_COUNT)
                         c = 0;
@@ -195,6 +166,8 @@ void loop(){ //one frame
                     pwm_val[(uint8_t) nbuf] = c;
                     state = 0;
                     break;
+#endif//HAS_PWM_SUPPORT
+#ifdef HAS_7SEG_SUPPORT
                 case 7:
                     nbuf = c;
                     state = 8;
@@ -206,6 +179,7 @@ void loop(){ //one frame
                         state = 0;
                     }
                     break;
+#endif//HAS_7SEG_SUPPORT
             }
         }
     }while(!receive_state);
@@ -260,38 +234,10 @@ void loop(){ //one frame
         */
         _delay_ms(1);
     }
-    //switch_states[0] |= !!(PINH&0x02);
-    for(int i=0; i<INPUT_COUNT; i++){
-        debounce_timeouts[i]--;
-        //A #define for the debounce time would be great
-        if(debounce_timeouts[i] == 0){
-            uint8_t new_switch_state = switch_states[i]<<1;
-            if(!(switch_states[i]^new_switch_state)){
-                uart_putc('c');
-                uart_puthex(i);
-                uart_puthex(switch_states[i]&1);
-                debounce_timeouts[i] = 0xFF;
-                switch_states[i] = new_switch_state&3;
-            }
-        }
-    }
+#ifdef HAS_R0KETBEAM_SUPPORT
     r0ketbeam_loop();
+#endif//HAS_R0KETBEAM_SUPPORT
+#ifdef HAS_7SEG_SUPPORT
     7seg_loop();
-}
-
-//Software PWM stuff
-//Called every 256 cpu clks (i.e should not get overly long)
-ISR(TIMER0_OVF_vect){
-    uint8_t Q = 0;
-    Q |= (pwm_val[0] & pwm_cycle);
-    Q |= (pwm_val[1] & pwm_cycle)?2:0;
-    Q |= (pwm_val[2] & pwm_cycle)?4:0;
-    Q |= (pwm_val[3] & pwm_cycle)?8:0;
-    Q |= (pwm_val[4] & pwm_cycle)?16:0;
-    PORTC = Q;
-    OCR0A = pwm_cycle;
-    pwm_cycle<<=1;
-    if(!pwm_cycle){
-        pwm_cycle = 1;
-    }
+#endif//HAS_7SEG_SUPPORT
 }
