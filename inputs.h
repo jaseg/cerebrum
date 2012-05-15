@@ -10,5 +10,10 @@ uint8_t switch_states[INPUT_COUNT];
 void input_setup(void);
 void input_loop(void);
 
+#else//HAS_INPUT_SUPPORT
+
+void input_setup(){}
+void input_loop(){}
+
 #endif//HAS_INPUT_SUPPORT
 #endif//__INPUTS_H__

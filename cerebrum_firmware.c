@@ -6,6 +6,7 @@
  version 3 as published by the Free Software Foundation.
  */
 
+#include "config.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/pgmspace.h>
@@ -14,6 +15,7 @@
 #include "r0ketbeam.h"
 #include "util.h"
 #include "7seg.h"
+#include "led.h"
 
 void setup(void);
 void loop(void);
@@ -25,46 +27,17 @@ int main(void){
 
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
-    //The DDRs of the led matrix outputs are set in the mux loop.
-#ifdef HAS_PWM_SUPPORT
     pwm_setup();
-#endif//HAS_PWM_SUPPORT
-#ifdef HAS_7SEG_SUPPORT
     7seg_setup();
-#endif//HAS_7SEG_SUPPORT
-#ifdef HAS_R0KETBEAM_SUPPORT
     r0ketbeam_setup();
-#endif//HAS_R0KETBEAM_SUPPORT
-#ifdef HAS_INPUT_SUPPORT
     input_setup();
-#endif//HAS_INPUT_SUPPORT
-    //7seg_setup();
+    led_setup();
     sei();
 }
-
-//this scary construct is in place to make the compiler happy. if you know a better way, feel free to improve.
-uint8_t _frameBuffer[] = {0,0,0,0};
-uint8_t _secondFrameBuffer[] = {0,0,0,0};
-uint8_t* frameBuffer = _frameBuffer;
-uint8_t* secondFrameBuffer = _secondFrameBuffer;
 
 char nbuf;
 char bpos;
 int state = 0;
-
-void swapBuffers(void){
-    uint8_t* tmp = frameBuffer;
-    frameBuffer = secondFrameBuffer;
-    secondFrameBuffer = tmp;
-}
-
-void setLED(int num, int val){
-    if(num<32){
-        frameBuffer[num>>3] &= ~(1<<(num&7));
-        if(val)
-            frameBuffer[num>>3] |= 1<<(num&7);
-    }
-}
 
 void loop(){ //one frame
     static uint8_t escape_state = 0;
@@ -78,7 +51,7 @@ void loop(){ //one frame
         // \\   - backslash
         // \n   - newline
         // \[x] - x
-        //eats three commands: 's' (0x73) led value                     sets led number [led] to [value]
+        //eats [n] commands:   's' (0x73) led value                     sets led number [led] to [value]
         //                     'b' (0x62) buffer buffer buffer buffer   sets the whole frame buffer
         //                     'a' (0x61) meter value                   sets analog meter number [meter] to [value]
         //                     'r' (0x72)                               read the frame buffer
@@ -183,61 +156,9 @@ void loop(){ //one frame
             }
         }
     }while(!receive_state);
-    for(int i=0; i<8; i++){
-        uint8_t Q = 0x80>>i; //select the currently active "row" of the matrix. On the protoboards I make, this actually corresponds to physical traces.
-        //uint8_t DDRQ = 0xFF>>i; //This is supposed to be an optimization. It is untested and will probably not work.
-        uint8_t DDRQ = 0xFF; //Just for testing: reactivating the old behavioor
-        //unpacking of frame data: data is packed like this: [11111117][22222266][33333555][4444----]
-        if(!(i&4))
-            Q |= frameBuffer[i&3] >> i;
-        else
-            Q |= frameBuffer[i&3] & (0xFF << (i&3));
-        //FIXME this whole mapping shit should be done in h/w!!1!
-        //FIXME this whole mapping is not even correct!!1!
-        //FIXME IT DOES NOT WORK!!1!
-        // Q&0x01 ==> PG5
-        //     02 ==> PE3
-        //     04 ==> PH3
-        //     08 ==> PH4
-        //     10 ==> PH5
-        //     20 ==> PH6
-        //     40 ==> PB4
-        //     80 ==> PB5
-        DDRG&=~(1<<5);
-        DDRG|=(DDRQ&1)<<5;
-        PORTG&=~(1<<5);
-        PORTG|=(Q&1)<<5;
-        DDRE&=~(1<<3);
-        DDRE|=(DDRQ&2)<<2;
-        PORTE&=~(1<<3);
-        PORTE|=(Q&2)<<2;
-        DDRH&=0xC3;
-        DDRH|=(DDRQ&0x3C);
-        PORTH&=0xC3;
-        PORTH|=(Q&0x3C);
-        DDRB&=0xCF;
-        DDRB|=(DDRQ&0xC0)>>2;
-        PORTB&=0xCF;
-        PORTB|=(Q&0xC0)>>2;
-        /* second channel skeleton
-        Q = 0x80>>i;
-        if(!(i&4))
-            Q |= frameBuffer[4+(i&3)] >> i;
-        else
-            Q |= frameBuffer[4+(i&3)] & (0xFF << (i&3));
-        DDRA = DDRQ;
-        PORTA = Q;
-        //PORTD &= 0x0F;
-        //PORTD |= Q&0xF0;
-        //PORTB &= 0xF0;
-        //PORTB |= Q&0x0F;
-        */
-        _delay_ms(1);
-    }
-#ifdef HAS_R0KETBEAM_SUPPORT
+    led_loop();
     r0ketbeam_loop();
-#endif//HAS_R0KETBEAM_SUPPORT
-#ifdef HAS_7SEG_SUPPORT
     7seg_loop();
-#endif//HAS_7SEG_SUPPORT
+    input_loop();
+    pwm_loop();
 }

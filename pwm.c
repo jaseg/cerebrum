@@ -3,13 +3,11 @@
 #include "pwm.h"
 
 void pwm_setup(void){
-#ifdef HAS_PWM_SUPPORT
     //s/w "BCM"(<== "Binary Code Modulation") timer setup
     TCCR0A |= _BV(WGM00)|_BV(WGM01);
     TCCR0B |= _BV(CS02);
     TIMSK0 |= _BV(TOIE0);
     //FIXME set PWM output DDRs
-#endif//HAS_PWM_SUPPORT
 }
 
 //Software PWM stuff

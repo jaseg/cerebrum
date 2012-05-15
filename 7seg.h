@@ -9,5 +9,10 @@ void 7seg_loop(void);
 
 uint8_t 7seg_buf[1] = {char[4]};
 
+#else//HAS_7SEG_SUPPORT
+
+void 7seg_setup(){}
+void 7seg_loop(){}
+
 #endif//HAS_7SEG_SUPPORT
 #endif//__7SEG_H__
