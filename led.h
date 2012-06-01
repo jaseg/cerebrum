@@ -10,18 +10,15 @@
 extern uint8_t* frameBuffer;
 extern uint8_t* secondFrameBuffer;
 
+extern void led_output_stuff1(uint8_t data, uint8_t dir);
+
 void swapBuffers(void);
 void setLED(int num, int val);
 
-//CAUTION! This loop function takes more than 8ms due to delays.
-void led_loop(void);
-
-#else//HAS_LED_SUPPORT
-
-void led_loop(){}
-
 #endif//HAS_LED_SUPPORT
 
+//CAUTION! This loop function takes more than 8ms due to delays.
+void led_loop(void);
 void led_setup(void);
 
 #endif//__LED_H__

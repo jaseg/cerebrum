@@ -4,11 +4,11 @@
 
 #define HAS_PWM_SUPPORT         1
 #define HAS_R0KETBEAM_SUPPORT   1
-#define HAS_INPUT_SUPPORT       1
+//#define HAS_INPUT_SUPPORT       1
 #define HAS_LED_SUPPORT         1
 
 #define PWM_COUNT 5
-#define INPUT_COUNT 1
+//#define INPUT_COUNT 1
 
 
 #define L7SEG_CLK_DDR    

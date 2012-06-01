@@ -137,7 +137,7 @@ TARGET = $(PROJECTNAME)
 # CSRC = $(PROJECTNAME).cpp second.cpp third.cpp a.c another.c
 
 # List C and C++ files here
-CSRC = $(PROJECTNAME).c uart.c util.c spi.c led.c input.c 7seg.c pwm.c r0ketbeam.c RF24/RF24.c
+CSRC = $(PROJECTNAME).c uart.c util.c spi.c led.c input.c 7seg.c pwm.c r0ketbeam.c RF24/RF24.c config.c
 # <==
 
 

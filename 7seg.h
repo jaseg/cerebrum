@@ -9,7 +9,7 @@ void l7seg_loop(void);
 
 #ifdef HAS_7SEG_SUPPORT
 
-extern uint8_t 7seg_buf**;
+extern uint8_t* l7seg_buf;
 
 #endif//HAS_7SEG_SUPPORT
 #endif//__7SEG_H__
