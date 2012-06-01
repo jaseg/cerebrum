@@ -1,4 +1,6 @@
 
+#include "config.h"
+#ifdef HAS_R0KETBEAM_SUPPORT
 #include <RF24.h>
 
 #include "r0ketbeam.h"
@@ -180,4 +182,9 @@ void r0ketbeam_loop(void)
     }
 }
 
+#else//HAS_R0KETBEAM_SUPPORT
 
+void r0ketbeam_loop(){}
+void r0ketbeam_setup(){}
+
+#endif//HAS_R0KETBEAM_SUPPORT

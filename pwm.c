@@ -1,8 +1,12 @@
 
-#include "pwm_config.h"
 #include "pwm.h"
 
-void pwm_setup(void){
+//The PWM has no loop function. It runs entirely out of the ISR.
+void pwm_loop(){}
+
+#ifdef HAS_PWM_SUPPORT
+
+void pwm_setup(){
     //s/w "BCM"(<== "Binary Code Modulation") timer setup
     TCCR0A |= _BV(WGM00)|_BV(WGM01);
     TCCR0B |= _BV(CS02);
@@ -26,3 +30,12 @@ ISR(TIMER0_OVF_vect){
         pwm_cycle = 1;
     }
 }
+
+uint8_t pwm_cycle = 0;
+uint8_t pwm_val[PWM_COUNT];
+
+#else//HAS_PWM_SUPPORT
+
+void pwm_setup(){}
+
+#endif//HAS_PWM_SUPPORT
