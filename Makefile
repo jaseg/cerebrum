@@ -137,7 +137,7 @@ TARGET = $(PROJECTNAME)
 # CSRC = $(PROJECTNAME).cpp second.cpp third.cpp a.c another.c
 
 # List C and C++ files here
-CSRC = $(PROJECTNAME).c uart.c util.c spi.c r0ketbeam.c RF24/RF24.c
+CSRC = $(PROJECTNAME).c uart.c util.c spi.c led.c input.c 7seg.c pwm.c r0ketbeam.c RF24/RF24.c
 # <==
 
 
@@ -386,7 +386,7 @@ AVRDUDE_PROGRAMMER = stk500v2 -b 115200
 
 
 # ==> Choose the port used by the programmer
-AVRDUDE_PORT = /dev/ttyACM0
+AVRDUDE_PORT = /dev/ttyACM1
 # <==
 
 
@@ -523,7 +523,7 @@ gccversion :
 
 # Program the device.
 program: $(TARGET).hex $(TARGET).eep
-	sh -c 'echo>/dev/ttyACM0'
+	sh -c 'echo>/dev/ttyACM1'
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 

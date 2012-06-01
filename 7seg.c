@@ -1,37 +1,39 @@
+#include "config.h"
+#ifdef HAS_7SEG_SUPPORT
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include "uart.h"
-#include "7seg_config.h"
+#include "7seg.h"
 
-void 7seg_setup(){
-    7SEG_CLK_DDR |= _BV(7SEG_CLK_PIN);
-    7SEG_DATA_DDR |= _BV(7SEG_DATA_PIN);
-    7SEG_DIGIT1_DDR |= _BV(7SEG_DIGIT1_PIN);
-    7SEG_DIGIT2_DDR |= _BV(7SEG_DIGIT2_PIN);
+void l7seg_setup(){
+    L7SEG_CLK_DDR |= _BV(L7SEG_CLK_PIN);
+    L7SEG_DATA_DDR |= _BV(L7SEG_DATA_PIN);
+    L7SEG_DIGIT1_DDR |= _BV(L7SEG_DIGIT1_PIN);
+    L7SEG_DIGIT2_DDR |= _BV(L7SEG_DIGIT2_PIN);
 }
 
 inline void 7seg_pulse_clk(){
-    7SEG_CLK_PORT |= _BV(7SEG_CLK_PIN);
-    7SEG_CLK_PORT &= ~_BV(7SEG_CLK_PIN);
+    L7SEG_CLK_PORT |= _BV(L7SEG_CLK_PIN);
+    L7SEG_CLK_PORT &= ~_BV(L7SEG_CLK_PIN);
 }
 
 inline void 7seg_data_out(uint8_t val){
-    7SEG_DATA_PORT &= ~_BV(7SEG_DATA_PIN);
+    L7SEG_DATA_PORT &= ~_BV(L7SEG_DATA_PIN);
     if(!val){
-        7SEG_DATA_PORT |= _BV(7SEG_DATA_PIN);
+        L7SEG_DATA_PORT |= _BV(L7SEG_DATA_PIN);
     }
 }
 
 inline void 7seg_select_digit(uint8_t digit){
-    7SEG_DIGIT1_PORT &= ~_BV(7SEG_DIGIT1_PIN);
-    7SEG_DIGIT2_PORT &= ~_BV(7SEG_DIGIT2_PIN);
+    L7SEG_DIGIT1_PORT &= ~_BV(L7SEG_DIGIT1_PIN);
+    L7SEG_DIGIT2_PORT &= ~_BV(L7SEG_DIGIT2_PIN);
     if(digit&1){ 
-        7SEG_DIGIT1_PORT |= _BV(7SEG_DIGIT1_PIN);
+        L7SEG_DIGIT1_PORT |= _BV(L7SEG_DIGIT1_PIN);
     }
     if(digit&2){
-        7SEG_DIGIT2_PORT |= _BV(7SEG_DIGIT2_PIN);
+        L7SEG_DIGIT2_PORT |= _BV(L7SEG_DIGIT2_PIN);
     }
 }
 
@@ -91,7 +93,7 @@ int 7seg_get_digit(uint8_t b, uint8_t a){
     return out | 7seg_digit2[b];
 }
 
-void 7seg_loop(){ //one frame
+void l7seg_loop(){ //one frame
     cycle = get_digit(7seg_buf[2],7seg_buf[3]);
     for(uint8_t i = 0; i<16; i++){
         data_out(cycle&1);
@@ -113,3 +115,12 @@ void 7seg_loop(){ //one frame
     _delay_ms(1);
     select_digit(0);
 }
+
+uint8_t 7seg_buf[1] = {char[4]};
+
+#else//HAS_7SEG_SUPPORT
+
+void l7seg_setup(void){}
+void l7seg_loop(void){}
+
+#endif HAS_7SEG_SUPPORT

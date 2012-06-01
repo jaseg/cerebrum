@@ -12,10 +12,12 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 #include "uart.h"
-#include "r0ketbeam.h"
 #include "util.h"
+#include "r0ketbeam.h"
 #include "7seg.h"
 #include "led.h"
+#include "pwm.h"
+#include "input.h"
 
 void setup(void);
 void loop(void);
@@ -28,7 +30,7 @@ int main(void){
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
     pwm_setup();
-    7seg_setup();
+    l7seg_setup();
     r0ketbeam_setup();
     input_setup();
     led_setup();
@@ -100,7 +102,7 @@ void loop(){ //one frame
                         case 'r':
                             uart_putc('r');
                             for(uint8_t i=0; i<sizeof(frameBuffer); i++){
-                                put_hex(frameBuffer[i]);
+                                uart_puthex(frameBuffer[i]);
                             }
                             uart_putc('\n');
                             break;
@@ -158,7 +160,7 @@ void loop(){ //one frame
     }while(!receive_state);
     led_loop();
     r0ketbeam_loop();
-    7seg_loop();
+    l7seg_loop();
     input_loop();
     pwm_loop();
 }

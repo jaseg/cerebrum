@@ -1,6 +1,6 @@
 
-#include "input_config.h"
-#include "inputs.h"
+#include "input.h"
+#ifdef HAS_INPUT_SUPPORT
 
 uint8_t switch_last_state = 0;
 int switch_debounce_timeout = 0;
@@ -28,3 +28,12 @@ void input_loop(void){
     }
 }
 
+uint8_t debounce_timeouts[INPUT_COUNT];
+uint8_t switch_states[INPUT_COUNT];
+
+#else//HAS_INPUT_SUPPORT
+
+void input_setup(){}
+void input_loop(){}
+
+#endif//HAS_INPUT_SUPPORT

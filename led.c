@@ -1,5 +1,11 @@
 
 #include "led.h"
+#include <util/delay.h>
+
+//The DDRs of the led matrix outputs are set in the mux loop.
+void led_setup(void){}
+
+#ifdef HAS_LED_SUPPORT
 
 void swapBuffers(void){
     uint8_t* tmp = frameBuffer;
@@ -22,9 +28,9 @@ void led_loop(){
         uint8_t DDRQ = 0xFF; //Just for testing: reactivating the old behavioor
         //unpacking of frame data: data is packed like this: [11111117][22222266][33333555][4444----]
         if(!(i&4))
-            Q |= frameBuffer[i&3] >> i;
+            Q |= frameBuffer[i&3] >> (i+1);
         else
-            Q |= frameBuffer[i&3] & (0xFF << (i&3));
+            Q |= frameBuffer[i&3] & (0xFF << ((i&3)+1));
         //FIXME this whole mapping shit should be done in h/w!!1!
         //FIXME this whole mapping is not even correct!!1!
         //FIXME IT DOES NOT WORK!!1!
@@ -68,3 +74,11 @@ void led_loop(){
         _delay_ms(1);
     }
 }
+
+//this scary construct is in place to make the compiler happy. if you know a better way, feel free to improve.
+uint8_t _frameBuffer[] = {0,0,0,0};
+uint8_t _secondFrameBuffer[] = {0,0,0,0};
+uint8_t* frameBuffer = _frameBuffer;
+uint8_t* secondFrameBuffer = _secondFrameBuffer;
+
+#endif//HAS_LED_SUPPORT
