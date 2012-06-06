@@ -2,12 +2,13 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
+void config_setup(void);
+
 #define HAS_PWM_SUPPORT         1
 #define HAS_R0KETBEAM_SUPPORT   1
 //#define HAS_INPUT_SUPPORT       1
 #define HAS_LED_SUPPORT         1
 
-#define PWM_COUNT 5
 //#define INPUT_COUNT 1
 
 

@@ -41,6 +41,7 @@ void setup(){
 char nbuf;
 char bpos;
 int state = 0;
+uint8_t somecycle = 0; //FIXME debug value
 
 void loop(){ //one frame
     static uint8_t escape_state = 0;
@@ -142,6 +143,8 @@ void loop(){ //one frame
                     if(c > PWM_COUNT)
                         c = 0;
                     nbuf = c;
+                    if(nbuf >= PWM_COUNT)
+                        nbuf = 0;
                     state = 6;
                     break;
                 case 6:
@@ -171,4 +174,11 @@ void loop(){ //one frame
     input_loop();
     pwm_loop();
     _delay_ms(1);
+    somecycle++;
+    if(!somecycle){
+        pwm_val[0]++;
+        pwm_val[1]++;
+        pwm_val[2]++;
+        pwm_val[3]++;
+    }
 }
