@@ -30,12 +30,6 @@ int main(void){
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(57600, F_CPU));
     DDRD |= 0x02;
-    sei();
-    for(;;){
-        uart_putc('c');
-        uart_putc('\n');
-        _delay_ms(100);
-    }
     pwm_setup();
     l7seg_setup();
     r0ketbeam_setup();

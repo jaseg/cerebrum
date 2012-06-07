@@ -3,6 +3,9 @@
 /************************************************************************
 Title:    Interrupt UART library with receive/transmit circular buffers
 Author:   Peter Fleury <pfleury@gmx.ch>   http://jump.to/fleury
+Fiddled around with by: jaseg
+CAUTION! THIS FILE CURRENTLY ONLY WORKS WITH ATMega328p and similar devices because
+only for these I was keen to change the signal names to proper interrupt vectors
 File:     $Id: uart.h,v 1.8.2.1 2007/07/01 11:14:38 peter Exp $
 Software: AVR-GCC 4.1, AVR Libc 1.4
 Hardware: any AVR with built-in UART, tested on AT90S8515 & ATmega8 at 4 Mhz
@@ -108,7 +111,7 @@ extern void uart_init(unsigned int baudrate);
 /**
  *  @brief   Get received byte from ringbuffer
  *
- * Returns in the lower byte the received character and in the 
+ * Returns in the lower byte the received character and in the
  * higher byte the last receive error.
  * UART_NO_DATA is returned when no data is available.
  *
@@ -116,18 +119,18 @@ extern void uart_init(unsigned int baudrate);
  *  @return  lower byte:  received byte from ringbuffer
  *  @return  higher byte: last receive status
  *           - \b 0 successfully received data from UART
- *           - \b UART_NO_DATA           
+ *           - \b UART_NO_DATA
  *             <br>no receive data available
- *           - \b UART_BUFFER_OVERFLOW   
+ *           - \b UART_BUFFER_OVERFLOW
  *             <br>Receive ringbuffer overflow.
- *             We are not reading the receive buffer fast enough, 
- *             one or more received character have been dropped 
- *           - \b UART_OVERRUN_ERROR     
+ *             We are not reading the receive buffer fast enough,
+ *             one or more received character have been dropped
+ *           - \b UART_OVERRUN_ERROR
  *             <br>Overrun condition by UART.
- *             A character already present in the UART UDR register was 
+ *             A character already present in the UART UDR register was
  *             not read by the interrupt handler before the next character arrived,
  *             one or more received characters have been dropped.
- *           - \b UART_FRAME_ERROR       
+ *           - \b UART_FRAME_ERROR
  *             <br>Framing Error by UART
  */
 extern unsigned int uart_getc(void);
