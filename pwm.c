@@ -11,9 +11,11 @@ void pwm_setup(){
     //s/w "BCM"(<== "Binary Code Modulation") timer setup
     TCCR0A |= _BV(WGM00)|_BV(WGM01);
     TCCR0B |= _BV(CS01)|_BV(CS00)|_BV(WGM02);
-    //TIMSK0 |= _BV(TOIE0);
+    TIMSK0 |= _BV(TOIE0);
     OCR0A = 1;
     pwm_output_setup();
+    //FIXME debug stuff
+    DDRB |= 0x20;
 }
 
 //Software PWM stuff
@@ -25,9 +27,9 @@ ISR(TIMER0_OVF_vect){
     }
     uint8_t Q = 0;
     if(pwm_cycle&0x80)
-        frameBuffer[0]^=1;
+        PORTB ^= 0x20;
     pwm_unset_outputs();
-    Q |= (pwm_val[0] & pwm_cycle);
+    Q |= !!(pwm_val[0] & pwm_cycle);
     Q |= (pwm_val[1] & pwm_cycle)?2:0;
     Q |= (pwm_val[2] & pwm_cycle)?4:0;
     Q |= (pwm_val[3] & pwm_cycle)?8:0;
@@ -37,7 +39,7 @@ ISR(TIMER0_OVF_vect){
     Q |= (pwm_val[7] & pwm_cycle)?128:0;
     */
     pwm_set_outputs(Q);
-    OCR0A = 1;//pwm_cycle;
+    OCR0A = pwm_cycle;
 }
 
 uint8_t pwm_cycle = 1;

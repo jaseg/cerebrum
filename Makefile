@@ -89,7 +89,7 @@ PROJECTNAME=cerebrum_firmware
 # <==
 
 # ==> MCU name
-MCU = atmega2560
+MCU = atmega328p
 # <==
 
 
@@ -137,7 +137,7 @@ TARGET = $(PROJECTNAME)
 # CSRC = $(PROJECTNAME).cpp second.cpp third.cpp a.c another.c
 
 # List C and C++ files here
-CSRC = $(PROJECTNAME).c uart.c util.c spi.c led.c input.c 7seg.c pwm.c r0ketbeam.c RF24/RF24.c config.c
+CSRC = $(PROJECTNAME).c uart.c util.c spi.c led.c input.c 7seg.c pwm.c r0ketbeam.c config.c
 # <==
 
 
@@ -381,12 +381,12 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 
 
 # ==> Programming support using avrdude. Settings and variables.
-AVRDUDE_PROGRAMMER = stk500v2 -b 115200
+AVRDUDE_PROGRAMMER = arduino -b 115200
 # <==
 
 
 # ==> Choose the port used by the programmer
-AVRDUDE_PORT = /dev/ttyACM1
+AVRDUDE_PORT = /dev/ttyACM0
 # <==
 
 
@@ -523,7 +523,7 @@ gccversion :
 
 # Program the device.
 program: $(TARGET).hex $(TARGET).eep
-	sh -c 'echo>/dev/ttyACM1'
+	sh -c 'echo>/dev/ttyACM0'
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 

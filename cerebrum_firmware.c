@@ -28,7 +28,14 @@ int main(void){
 }
 
 void setup(){
-    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
+    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(57600, F_CPU));
+    DDRD |= 0x02;
+    sei();
+    for(;;){
+        uart_putc('c');
+        uart_putc('\n');
+        _delay_ms(100);
+    }
     pwm_setup();
     l7seg_setup();
     r0ketbeam_setup();
@@ -149,6 +156,7 @@ void loop(){ //one frame
                     break;
                 case 6:
                     pwm_val[(uint8_t) nbuf] = c;
+                    uart_puts_p(PSTR("ACK\n"));
                     state = 0;
                     break;
 #endif//HAS_PWM_SUPPORT
@@ -174,11 +182,4 @@ void loop(){ //one frame
     input_loop();
     pwm_loop();
     _delay_ms(1);
-    somecycle++;
-    if(!somecycle){
-        pwm_val[0]++;
-        pwm_val[1]++;
-        pwm_val[2]++;
-        pwm_val[3]++;
-    }
 }
