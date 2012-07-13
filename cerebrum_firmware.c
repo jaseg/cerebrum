@@ -102,6 +102,14 @@ void loop(){ //one frame
                             nbuf = 0;
                             break;
 #endif//HAS_PWM_SUPPORT
+                        case 'x':
+                            //DDRF |= 0x01;
+                            //PORTF |= 0x01;
+                            break;
+                        case 'X':
+                            //DDRF &= 0xFE;
+                            //PORTF &= 0xFE;
+                            break;
 #ifdef HAS_LED_SUPPORT
                         case 'r':
                             uart_putc('r');

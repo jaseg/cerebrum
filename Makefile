@@ -386,7 +386,7 @@ AVRDUDE_PROGRAMMER = stk500v2 -b 115200
 
 
 # ==> Choose the port used by the programmer
-AVRDUDE_PORT = /dev/ttyACM1
+AVRDUDE_PORT = /dev/ttyACM0
 # <==
 
 
@@ -523,7 +523,7 @@ gccversion :
 
 # Program the device.
 program: $(TARGET).hex $(TARGET).eep
-	sh -c 'echo>/dev/ttyACM1'
+	sh -c 'echo>/dev/ttyACM0'
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 
