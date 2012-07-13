@@ -102,6 +102,7 @@ void loop(){ //one frame
                             nbuf = 0;
                             break;
 #endif//HAS_PWM_SUPPORT
+#ifdef HAS_NOISE_MAKER_SUPPORT
                         case 'x':
                             //DDRF |= 0x01;
                             //PORTF |= 0x01;
@@ -110,6 +111,7 @@ void loop(){ //one frame
                             //DDRF &= 0xFE;
                             //PORTF &= 0xFE;
                             break;
+#endif//HAS_NOISE_MAKER_SUPPORT
 #ifdef HAS_LED_SUPPORT
                         case 'r':
                             uart_putc('r');
