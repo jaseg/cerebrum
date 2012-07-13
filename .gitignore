@@ -12,3 +12,4 @@
 *.sym
 RF24
 tmp
+config.h
