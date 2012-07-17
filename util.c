@@ -61,6 +61,27 @@ void uart_putdec(uint8_t data){
     uart_putc('0'+data);
 }
 
+void uart_putdec_signed(int8_t data){
+    if(data < 0){
+        uart_putc('-');
+        data ^= 0xFF;
+        data += 1;
+    }
+    if(data >= 100){
+        if(data >= 200){
+            uart_putc('2');
+            data -= 200;
+        }else{
+            uart_putc('1');
+            data -= 100;
+        }
+    }
+    uint8_t d2 = data/10;
+    data %= 10;
+    uart_putc('0'+d2);
+    uart_putc('0'+data);
+}
+
 int parseHex(char* buf){
     int result = 0;
     int len = 2;
