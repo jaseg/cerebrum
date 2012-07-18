@@ -1,11 +1,14 @@
 
 #include "pwm.h"
 #include "led.h"
-
-//The PWM has no loop function. It runs entirely out of the ISR.
-void pwm_loop(){}
-
+#include "util.h"
 #ifdef HAS_PWM_SUPPORT
+
+void pwm_loop(){
+#ifdef PWM_ANIMATE
+    pwm_animate();
+#endif//PWM_ANIMATE
+}
 
 void pwm_setup(){
     //s/w "BCM"(<== "Binary Code Modulation") timer setup
@@ -39,8 +42,75 @@ ISR(TIMER0_COMPA_vect){
 uint8_t pwm_cycle = 1;
 uint8_t pwm_val[8];
 
+rgb_value_t hsv_to_rgb(hsv_value_t k){
+    //The following algorithm is loosely based on http://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
+    uint16_t c_ = (uint16_t)k.v * (uint16_t)k.s;
+    uint8_t c = c_>>8;
+    uint8_t m = k.v - c;
+    rgb_value_t ret = {0, 0, 0};
+    uint8_t branch;
+    uint8_t h_;
+    if(k.h<128){
+        if(k.h<85){
+            if(k.h<43){
+                h_ = k.h;
+                branch = 0;
+            }else{
+                h_ = 43-k.h;
+                branch = 1;
+            }
+        }else{
+            h_ = k.h-128;
+            branch = 2;
+        }
+    }else{
+        if(k.h<171){
+            h_ = 171-k.h;
+            branch = 3;
+        }else{
+            if(k.h<213){
+                h_ = k.h-171;
+                branch = 4;
+            }else{
+                h_ = 255-k.h;
+                branch = 5;
+            }
+        }
+    }
+    uint16_t x_ = c * (uint16_t)h_;
+    uint8_t x = x_>>8;
+    switch(branch){
+        case 0:
+            ret.r += c;
+            ret.g += x;
+            break;
+        case 1:
+            ret.r += x;
+            ret.g += c;
+            break;
+        case 2:
+            ret.g += c;
+            ret.b += x;
+            break;
+        case 3:
+            ret.g += x;
+            ret.b += c;
+            break;
+        case 4:
+            ret.r += x;
+            ret.b += c;
+            break;
+        case 5:
+            ret.r += c;
+            ret.b += x;
+            break;
+    }
+    return ret;
+}
+
 #else//HAS_PWM_SUPPORT
 
 void pwm_setup(){}
+void pwm_loop(){}
 
 #endif//HAS_PWM_SUPPORT
