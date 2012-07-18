@@ -29,7 +29,8 @@ int main(void){
 
 void setup(){
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(57600, F_CPU));
-    DDRD |= 0x02;
+    //FIXME what was the following line for?
+    //DDRD |= 0x02;
     pwm_setup();
     l7seg_setup();
     r0ketbeam_setup();

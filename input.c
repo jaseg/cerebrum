@@ -15,7 +15,7 @@ void input_loop(void){
                 uart_puthex(i);
                 uart_puthex(switch_states[i]&1);
                 uart_putc('\n');
-                debounce_timeouts[i] = 0x00;
+                debounce_timeouts[i] = 0xF0;
                 switch_states[i] = (switch_states[i]<<1)&3;
             }
             switch_states[i] &= 0xFE;

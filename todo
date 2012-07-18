@@ -1,3 +1,4 @@
 analog switch matrix support
 pwm'ed large rgb matrix support (>= 100 LEDs)
 check s/w pwm for nonlinearities
+switch from ifdefs in the source files of the "modules" to ifdefs in cerebrum_firmware.c
