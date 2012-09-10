@@ -186,5 +186,6 @@ void loop(){ //one frame
     l7seg_loop();
     input_loop();
     pwm_loop();
+    config_loop();
     _delay_ms(1);
 }

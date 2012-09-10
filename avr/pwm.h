@@ -33,15 +33,10 @@ typedef union {
 } rgb_color_t;
 
 typedef struct {
-    uint8_t h;
+    uint16_t h;
     uint8_t s;
     uint8_t v;
 } hsv_value_t;
-
-typedef union {
-    hsv_value_t hsv_value;
-    uint8_t components[3];
-} hsv_color_t;
 
 rgb_value_t hsv_to_rgb(hsv_value_t k);
 

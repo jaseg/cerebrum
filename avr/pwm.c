@@ -43,7 +43,59 @@ uint8_t pwm_cycle = 1;
 uint8_t pwm_val[8];
 
 rgb_value_t hsv_to_rgb(hsv_value_t k){
+    int f;
+    long p, q, t;
+    rgb_value_t ret = {0, 0, 0};
+
+    if(k.s==0){
+        ret.r = ret.g = ret.b = k.v;
+        return ret;
+    }
+
+    f = ((k.h%60)*255)/60;
+    k.h /= 60;
+
+    p = (k.v * (256 - k.s))/256;
+    q = (k.v * ( 256 - (k.s * f)/256 ))/256;
+    t = (k.v * ( 256 - (k.s * ( 256 - f ))/256))/256;
+
+    switch(k.h){
+        case 0:
+            ret.r = k.v;
+            ret.g = t;
+            ret.b = p;
+            break;
+        case 1:
+            ret.r = q;
+            ret.g = k.v;
+            ret.b = p;
+            break;
+        case 2:
+            ret.r = p;
+            ret.g = k.v;
+            ret.b = t;
+            break;
+        case 3:
+            ret.r = p;
+            ret.g = q;
+            ret.b = k.v;
+            break;
+        case 4:
+            ret.r = t;
+            ret.g = p;
+            ret.b = k.v;
+            break;
+        default:
+            ret.r = k.v;
+            ret.g = p;
+            ret.b = q;
+            break;
+    }
+    return ret;
+}
+/*
     //The following algorithm is loosely based on http://en.wikipedia.org/wiki/HSL_and_HSV#Converting_to_RGB
+    //AND BROKEN
     uint16_t c_ = (uint16_t)k.v * (uint16_t)k.s;
     uint8_t c = c_>>8;
     uint8_t m = k.v - c;
@@ -107,6 +159,7 @@ rgb_value_t hsv_to_rgb(hsv_value_t k){
     }
     return ret;
 }
+*/
 
 #else//HAS_PWM_SUPPORT
 

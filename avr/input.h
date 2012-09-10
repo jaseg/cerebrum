@@ -14,6 +14,7 @@ void input_loop(void);
 extern uint8_t debounce_timeouts[INPUT_COUNT];
 extern uint8_t switch_states[INPUT_COUNT];
 void input_scan_inputs(void);
+void input_callback(uint8_t input, uint8_t state);
 
 #endif//HAS_INPUT_SUPPORT
 #endif//__INPUTS_H__
