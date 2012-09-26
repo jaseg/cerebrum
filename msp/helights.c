@@ -67,18 +67,24 @@ int main(void){
     DCOCTL |= DCO1 | DCO0;
     BCSCTL1 |= RSEL3 | RSEL2 | RSEL0; 
     
-    //Timer setup
+    //PWM Timer setup (uses both TIMER_As)
     TA0CTL = MC_2 | TASSEL_2; //Continous with SMCLK
     TA1CTL = MC_2 | TASSEL_2; //Continous with SMCLK
     TA0CCTL1 = OUTMOD_3;
     TA1CCTL1 = OUTMOD_3;
     TA1CCTL2 = OUTMOD_3;
 
+    //PWM output io setup
     P1DIR |= 0x40; //P1.6
     P1SEL |= 0x40;
     P2DIR |= 0x12; //P2.1 2.4
     P2SEL |= 0x12;
+
+    //UART io setup (RX: P1.1, TX: P1.2)
+    P1SEL  |= 0x03;
+    P1SEL2 |= 0x03;
     
+    //set global interrupt enable bit
     _BIS_SR(GIE);
 
     hsvval col = {0.0, 1.0, 1.0};

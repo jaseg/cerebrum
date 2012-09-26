@@ -102,12 +102,41 @@ void init_uart(void){
 
 //--------------------------------------------------------------------------------------------------
 /**
-* \brief Gets a character from the input stream
+* \brief Gets a character from the inuart_put stream
+* \param None
+* \retval uint8_t Character
+**/
+uint16_t uart_getc_nonblocking(void){
+#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#if (UIO_USE_INTERRUPTS == 1)
+	uint16_t chr;
+	if(fifo_rdcount(&RXFIFO) == 0){ // no char received
+        return(0x0100);
+    }else{
+        fifo_read(&RXFIFO,&chr,1);
+        return(chr);
+    }
+#else
+	if((UIO_IFG & UCRXIFG) == 0){ // no char received
+        return(0x0100);
+    }else{
+        return(UIO_RXBUF);
+    }
+#endif
+
+#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	#error "Hardware Abstraction for UCA not written yet!"
+#endif
+}
+
+//--------------------------------------------------------------------------------------------------
+/**
+* \brief Gets a character from the inuart_put stream
 * \details If a character is not immediately available, function will block until it receives one.
 * \param None
 * \retval uint8_t Character
 **/
-uint8_t getc(void){
+uint8_t uart_getc(void){
 #if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if (UIO_USE_INTERRUPTS == 1)
 	uint8_t chr;
@@ -126,7 +155,7 @@ uint8_t getc(void){
 
 //--------------------------------------------------------------------------------------------------
 /**
-* \brief Returns the number of characters immediately available for input
+* \brief Returns the number of characters immediately available for inuart_put
 * \param None
 * \retval uint16_t Characters available
 **/
@@ -154,7 +183,7 @@ uint16_t incount(void){
 * \param [in] c Character to be sent
 * \return Nothing
 **/
-void putc(uint8_t c){
+void uart_putc(uint8_t c){
 #if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if (UIO_USE_INTERRUPTS == 1)
 	uint8_t chr;
@@ -189,7 +218,8 @@ void putc(uint8_t c){
 #if (UIO_USE_INTERRUPTS == 1)
 #if (UIO_ISR_SPLIT == 0)
 // RX/TX Interrupt Service Routine
-ISR(UIO_ISR_VECTOR, UIO_rxtxISR){
+#pragma vector=UIO_ISR_VECTOR
+__interrupt void UIO_rxtxISR(void) {
 
 	uint16_t iv = UIO_IV;
 	uint8_t chr;
@@ -209,14 +239,16 @@ ISR(UIO_ISR_VECTOR, UIO_rxtxISR){
 }
 #else
 // RX Interrupt Service Routine
-ISR(UIO_RXISR_VECTOR, UIO_rxISR){
+#pragma vector=UIO_RXISR_VECTOR 
+__interrupt void UIO_rxISR(void) {
 	uint8_t chr;
 	chr = UIO_RXBUF;
 	fifo_write(&RXFIFO,&chr,1);
 }
 
 // TX Interrupt Service Routine
-ISR(UIO_TXISR_VECTOR, UIO_txISR){
+#pragma vector=UIO_TXISR_VECTOR
+__interrupt void UIO_txISR(void) {
 	uint8_t chr;
 	if(fifo_read(&TXFIFO,&chr,1) == RES_OK){
 			UIO_TXBUF = chr;
@@ -242,11 +274,11 @@ ISR(UIO_TXISR_VECTOR, UIO_txISR){
 * \param [in] s Pointer to string to be sent
 * \return Nothing
 **/
-void puts(char *s) {
+void uart_puts(char *s) {
 	while(*s) {
-		if(*s == '\n')
-			putc('\r');
-		putc(*s++);
+		//if(*s == '\n') What the heck is this for?
+		//	uart_putc('\r');
+		uart_putc(*s++);
 	}
 }
 
@@ -259,12 +291,12 @@ void puts(char *s) {
 *	the line!
 * \return Pointer to the received string
 **/
-char* getline(char *line){
+char* uart_getline(char *line){
 	char *ch = line;
 	uint8_t k;
 	
 	// until we read a newline
-    while ((k = getc()) != '\n') {
+    while ((k = uart_getc()) != '\n') {
 		*ch++ = k;
 	}
 	
@@ -282,7 +314,7 @@ char* getline(char *line){
 * \param [in] places Number of digits to print. Use \c 0 to automatically determine how many digits.
 * \return Nothing
 **/
-void putx(uint16_t value, uint16_t places){
+void uart_putx(uint16_t value, uint16_t places){
 	int16_t i;
 	uint16_t j;
 	uint16_t bitmask;
@@ -301,9 +333,9 @@ void putx(uint16_t value, uint16_t places){
 	for(i = ((places-1)<<2); i >= 0; i -= 4) {
 		j = (value >> i) & 0xf;
 		if(j < 10) 
-			putc('0' + j);
+			uart_putc('0' + j);
 		else 
-			putc('A' - 10 + j);
+			uart_putc('A' - 10 + j);
 	}
 }
 
@@ -313,7 +345,7 @@ void putx(uint16_t value, uint16_t places){
 * \param [in] value Value to be printed
 * \return Nothing
 **/
-void putd(uint16_t value){
+void uart_putd(uint16_t value){
   uint16_t n;
   uint8_t str[5];
   n = 5;
@@ -325,7 +357,7 @@ void putd(uint16_t value){
   } while(value != 0);
 
   do{
-    putc(str[n]);
+    uart_putc(str[n]);
     n++;
   } while(n<5);
 }
@@ -336,7 +368,7 @@ void putd(uint16_t value){
 * \param [in] value Value to be printed
 * \return Nothing
 **/
-void putd32(uint32_t value){
+void uart_putd32(uint32_t value){
   uint16_t n;
   uint8_t str[10];
   n = 10;
@@ -348,7 +380,7 @@ void putd32(uint32_t value){
   } while(value != 0);
 
   do{
-    putc(str[n]);
+    uart_putc(str[n]);
     n++;
   } while(n<10);
 }
@@ -358,14 +390,14 @@ void putd32(uint32_t value){
 * \param [in] value Value to be printed
 * \return Nothing
 **/
-void putsd(int16_t value){
+void uart_putsd(int16_t value){
   uint16_t n;
   uint16_t uvalue;
   uint8_t str[5];
   n = 5;
   
   if(value < 0){
-    putc('-');
+    uart_putc('-');
     value = -value;
   }
   uvalue = (uint16_t) value;
@@ -377,7 +409,7 @@ void putsd(int16_t value){
   } while(uvalue != 0);
 
   do{
-    putc(str[n]);
+    uart_putc(str[n]);
     n++;
   } while(n<5);
 }

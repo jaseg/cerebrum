@@ -28,7 +28,7 @@
 * \brief Provides basic text IO functions for the MSP430 UART controller
 * \author Alex Mykyta (amykyta3@gmail.com)
 *
-* This module abstracts out the UART controller to provide basic text input and output functions. \n
+* This module abstracts out the UART controller to provide basic text inuart_put and outuart_put functions. \n
 *
 * <b> MSP430 Processor Families Supported: </b>
 *	- MSP430x2xx
@@ -64,16 +64,17 @@ extern "C" {
 ///\{
 void init_uart(void);
 
-uint8_t getc(void);		// Returns the next character recieved (Blocking function)
-char* getline(char *line);	// Gets a string from input until it hits a '\n' (Blocking Function)
-uint16_t incount(void);	// Returns the number of characters immediately available for input
+uint16_t uart_getc_nonblocking(void); // Returns the next character recieved
+uint8_t uart_getc(void);		// Returns the next character recieved (Blocking function)
+char* uart_getline(char *line);	// Gets a string from inuart_put until it hits a '\n' (Blocking Function)
+uint16_t incount(void);	// Returns the number of characters immediately available for inuart_put
 
-void putc(uint8_t c);		// Sends a character to the serial port.
-void puts(char *s);		// Sends a string
-void putx(uint16_t value, uint16_t places);	// Sends a value formatted in Hex
-void putd(uint16_t value);	// Sends an unsigned value formatted in decimal
-void putsd(int16_t value);	// Sends a signed value formatted in decimal
-void putd32(uint32_t value);
+void uart_putc(uint8_t c);		// Sends a character to the serial port.
+void uart_puts(char *s);		// Sends a string
+void uart_putx(uint16_t value, uint16_t places);	// Sends a value formatted in Hex
+void uart_putd(uint16_t value);	// Sends an unsigned value formatted in decimal
+void uart_putsd(int16_t value);	// Sends a signed value formatted in decimal
+void uart_putd32(uint32_t value);
 ///\}
 
 #ifdef __cplusplus

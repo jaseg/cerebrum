@@ -1,0 +1,25 @@
+{
+    "dev":{
+        "msp0": {
+            "protocol": "usbserial", 
+            "type": "msp",
+            "location": "/dev/msp0",
+            "baudrate": 115200,
+            "members": {
+                "rgb": {
+                    "type": "pwm-rgb",
+                    "ios": ["1.6", "2.1", "2.4"]
+                }
+            }
+        }
+    },
+    "log":{
+        "he1": {
+            "lighting": {
+                "table": {
+                    "rgb": "msp0.rgb"
+                }
+            }
+        }
+    }
+}
