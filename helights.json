@@ -3,11 +3,11 @@
         "msp0": {
             "protocol": "usbserial", 
             "type": "msp",
-            "location": "/dev/msp0",
+            "location": "13982397",
             "baudrate": 115200,
             "members": {
                 "rgb": {
-                    "type": "pwm-rgb",
+                    "type": "timer-pwm-rgb",
                     "ios": ["1.6", "2.1", "2.4"]
                 }
             }

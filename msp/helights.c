@@ -7,57 +7,7 @@
  */
 
 #include <msp430.h>
-#include <math.h>
-
-typedef struct{
-    unsigned int r, g, b;
-} rgbval; 
-
-typedef struct{
-    float h, s, v;
-} hsvval;
-
-rgbval hsv2rgb(hsvval in){
-    int hi = (int)floorf(in.h/60.0F);
-    float f = (in.h/60.0F-hi);
-    float p = in.v*(1.0F-in.s);
-    float q = in.v*(1.0F-in.s*f);
-    float t = in.v*(1.0F+in.s*f-in.s);
-    rgbval ret;
-    switch(hi){
-        case 0:
-            ret.r = in.v*0xFFFF;
-            ret.g = t*0xFFFF;
-            ret.b = p*0xFFFF;
-            break;
-        case 1:
-            ret.r = q*0xFFFF;
-            ret.g = in.v*0xFFFF;
-            ret.b = p*0xFFFF;
-            break;
-        case 2:
-            ret.r = p*0xFFFF;
-            ret.g = in.v*0xFFFF;
-            ret.b = t*0xFFFF;
-            break;
-        case 3:
-            ret.r = p*0xFFFF;
-            ret.g = q*0xFFFF;
-            ret.b = in.v*0xFFFF;
-            break;
-        case 4:
-            ret.r = t*0xFFFF;
-            ret.g = p*0xFFFF;
-            ret.b = in.v*0xFFFF;
-            break;
-        case 5:
-            ret.r = in.v*0xFFFF;
-            ret.g = p*0xFFFF;
-            ret.b = q*0xFFFF;
-            break;
-    }
-    return ret;
-}
+#include "autocode.h"
 
 int main(void){
     WDTCTL = WDTPW | WDTHOLD; //Disable WDT
@@ -67,39 +17,18 @@ int main(void){
     DCOCTL |= DCO1 | DCO0;
     BCSCTL1 |= RSEL3 | RSEL2 | RSEL0; 
     
-    //PWM Timer setup (uses both TIMER_As)
-    TA0CTL = MC_2 | TASSEL_2; //Continous with SMCLK
-    TA1CTL = MC_2 | TASSEL_2; //Continous with SMCLK
-    TA0CCTL1 = OUTMOD_3;
-    TA1CCTL1 = OUTMOD_3;
-    TA1CCTL2 = OUTMOD_3;
-
-    //PWM output io setup
-    P1DIR |= 0x40; //P1.6
-    P1SEL |= 0x40;
-    P2DIR |= 0x12; //P2.1 2.4
-    P2SEL |= 0x12;
-
     //UART io setup (RX: P1.1, TX: P1.2)
     P1SEL  |= 0x03;
     P1SEL2 |= 0x03;
+
+    init_auto();
     
     //set global interrupt enable bit
     _BIS_SR(GIE);
 
-    hsvval col = {0.0, 1.0, 1.0};
-    unsigned int foo = 0;
     for(;;){
-        col.h += 0.01;
-        if(col.h > 360)
-            col.h = 0;
-        foo++;
-        //P1OUT^=0x01;
-        rgbval rgb = hsv2rgb(col);
-        TA0CCR1 = rgb.g;
-        TA1CCR1 = rgb.b;
-        TA1CCR2 = rgb.r;
-        unsigned int i=0x20;
+        loop_auto();
+        unsigned int i = 0xffff;
         while(--i);
     }
 }

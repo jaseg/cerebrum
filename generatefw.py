@@ -7,18 +7,19 @@ import imp
 
 desc = json.JSONDecoder().decode('\n'.join(sys.stdin.readlines()))
 
-if "dev" not in desc or "log" not in desc:
-    exit(1)
+# I think it is better to just let it throw an error
+#if "dev" not in desc or "log" not in desc:
+#    exit(1)
 
-for devicename in desc["dev"].keys
+for devicename, dev in desc["dev"].items():
     dev = desc["dev"][devicename]
-    typepath = os.path.realpath(__file__) + dev["type"]
-    if os.path.exists(typepath):
-        #known type
-        ctx = imp.load_source("generate", typepath)
-        ctx.generate(dev)
-        ctx.commit(dev)
-    else:
-        print("Cannot find a handler for endpoint type " + dev["type"])
-        exit(1)
+    typepath = os.path.join(os.path.dirname(__file__), dev["type"], "generate.py")
+#    if not os.path.exists(typepath):
+#        print("Cannot find a handler for endpoint type " + dev["type"])
+#        exit(1)
+    #known type
+    print(typepath)
+    ctx = imp.load_source("generate", typepath)
+    ctx.generate(dev)
+    ctx.commit(dev)
 
