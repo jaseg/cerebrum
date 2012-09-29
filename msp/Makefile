@@ -1,11 +1,14 @@
 
 MCU=msp430g2553
 
-all: helights
+all: helights-$MCU.elf
 
-program: helights
-	mspdebug rf2500 "prog helights"
+clean:
+	rm -f *.elf
 
-helights: helights.c uart_io.c fifo.c
-	msp430-gcc -mmcu=$(MCU) -g -o helights helights.c uart_io.c fifo.c -lm
+program: helights-$MCU.elf
+	sudo mspdebug rf2500 "prog helights-$(MCU).elf"
+
+helights-$MCU.elf: helights.c fifo.c
+	msp430-gcc -mmcu=$(MCU) -g -o helights-$(MCU).elf helights.c fifo.c -lm
 
