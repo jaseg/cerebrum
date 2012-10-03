@@ -14,7 +14,7 @@ void comm_set_reg(uint16_t address, uint8_t data){
         // reserved
         return;
     }
-    % for (var, fmt, address, length) in module_variables:
+    % for (var, fmt, address, length, mname) in module_variables:
     //${var}: format ${fmt} @ address ${"{:#x}".format(address)} (${length} bytes)
     if(address < ${address+length}){
         *(((uint8_t*)&${var}) + (address - ${address})) = data;
@@ -28,7 +28,7 @@ uint8_t comm_get_reg(uint16_t address){
         // reserved
         return 0;
     }
-    % for (var, fmt, address, length) in module_variables:
+    % for (var, fmt, address, length, mname) in module_variables:
     //${var}: format ${fmt} @ address ${"{:#x}".format(address)} (${length} bytes)
     if(address < ${address+length}){
         return *(((uint8_t*)&${var}) + (address - ${address}));
@@ -69,21 +69,22 @@ def generate(dev):
         init_functions.append(init_function)
         loop_function = "loop_{}_{}".format(mtype, seqnum)
         loop_functions.append(loop_function)
+        member["variables"] = {}
         def modulevar(name, fmt=None):
             varname = "modvar_{}_{}_{}".format(mtype, seqnum, name)
             if fmt is not None:
                 slen = struct.calcsize(fmt)
-                module_variables.append( (varname, fmt, current_address, slen) )
-                #current_address += slen 
+                module_variables.append( (varname, fmt, current_address, slen, mname) )
+                current_address += slen 
+                member["variables"][name] = {"length": length, "address": address}
             return varname
         seqnum += 1
         tp = Template(filename=typepath)
         # "modulevar": modulevar,
         autocode += tp.render_unicode(init_function=init_function, loop_function=loop_function, modulevar=modulevar, dev=dev)
     autocode += Template(autoglue).render_unicode(init_functions=init_functions, loop_functions=loop_functions, module_variables=module_variables)
-    acf = open(os.path.join(os.path.dirname(__file__), "autocode.c"), "w")
-    acf.write(autocode)
-    acf.close()
+    with open(os.path.join(os.path.dirname(__file__), "autocode.c"), "w") as f:
+        f.write(autocode)
     subprocess.call(["/usr/bin/env", "make", "-C", os.path.dirname(__file__), "clean", "all"])
 
 def commit(dev):

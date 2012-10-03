@@ -20,6 +20,8 @@ for devicename, dev in desc["dev"].items():
     #known type
     print(typepath)
     ctx = imp.load_source("generate", typepath)
-    ctx.generate(dev)
+    deviceconfig = ctx.generate(dev)
+    with open(devicename + '.config.json', 'r') as f:
+        f.write(json.JSONEncoder().encode(deviceconfig))
     ctx.commit(dev)
 

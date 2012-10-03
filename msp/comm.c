@@ -16,9 +16,9 @@ void comm_loop(){
     v &= 0xff00;
     if(!v){ //a character was successfully received
         if(escape_state){
-            if(c == '#'){
-                command = 0;
-                pos = 0xff;
+            if(c == '#'){ //FIXME
+                //command = 0;
+                pos = 0;
                 return;
             }
             escape_state = 0;

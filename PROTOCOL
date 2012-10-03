@@ -6,3 +6,8 @@
  "\\#" [0x04] [2bytes address] [1byte length] read multiple registers
 
  '\\' characters in the payload are escaped as "\\\\"
+
+ "\\#" [2 bytes id] [1 byte length] [n bytes args] [dev:1 byte length]call function
+
+special functions:
+0x00: get device descriptor

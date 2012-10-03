@@ -7,7 +7,7 @@ program: helights
 	mspdebug -s $(SERIAL) rf2500 "prog helights"
 
 helights: helights.c uart_io.c fifo.c comm.c
-	msp430-gcc -mmcu=$(MCU) -g -std=gnu99 -o helights helights.c uart_io.c fifo.c comm.c autocode.c -lm
+	msp430-gcc -mmcu=$(MCU) -g -std=gnu99 -o helights helights.c uart_io.c fifo.c comm.c autocode.c config.c -lm
 
 clean:
 	rm helights || true
