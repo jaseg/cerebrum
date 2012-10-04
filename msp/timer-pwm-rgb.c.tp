@@ -81,7 +81,7 @@ void ${init_function} (){
     P2SEL |= 0x12;
 }
 
-hsvval ${modulevar("col", "fff")} = {0.0, 1.0, 1.0};
+${modulevar("col", "hsvval", "fff")} = {0.0, 1.0, 1.0};
 
 void ${loop_function} (){
     rgbval rgb = hsv2rgb( ${modulevar("col")} );

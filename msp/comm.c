@@ -7,17 +7,19 @@
 
 void comm_loop(){
     static uint8_t escape_state = 0;
+	static uint8_t state = 0;
     static uint16_t pos = 0;
-    static uint8_t command = 0;
-    static uint16_t address = 0;
-    static uint8_t length = 0;
+    static uint16_t funcid = 0;
+	static uint16_t crcbuf = 0;
+	static uint8_t argbuf[ARGBUF_SIZE];
+	static uint8_t arglen = 0;
+
     uint16_t v = uart_getc_nonblocking();
     uint8_t c = v&0xff;
     v &= 0xff00;
     if(!v){ //a character was successfully received
         if(escape_state){
             if(c == '#'){ //FIXME
-                //command = 0;
                 pos = 0;
                 return;
             }
@@ -28,74 +30,55 @@ void comm_loop(){
                 return;
             }
         }
-        if(pos == 0){
-            command = c;
-        }else{
-            switch(command){
-                case 1:
-                    switch(pos){
-                        case 1:
-                            address = c<<8;
-                            break;
-                        case 2:
-                            address |= c;
-                            break;
-                        case 3:
-                            comm_set_reg(address, c);
-                            break;
-                    }
-                    break;
-                case 2:
-                    switch(pos){
-                        case 1:
-                            address = c<<8;
-                            break;
-                        case 2:
-                            address |= c;
-                            putc_escaped(comm_get_reg(address));
-                            break;
-                    }
-                    break;
-                case 3:
-                    switch(pos){
-                        case 1:
-                            address = c<<8;
-                            break;
-                        case 2:
-                            address |= c;
-                            break;
-                        case 3:
-                            length = c;
-                            pos = 0x0100;
-                            break;
-                        default:
-                            if(pos&0xFF < length){
-                               comm_set_reg(address, c);
-                               address++;
-                            }
-                            break;
-                    }
-                    break;
-                case 4:
-                    switch(pos){
-                        case 1:
-                            address = c<<8;
-                            break;
-                        case 2:
-                            address |= c;
-                            break;
-                        case 3:
-                            for(uint16_t i=0; i<=c; i++){
-                                putc_escaped(comm_get_reg(address));
-                                address++;
-                            }
-                        break;
-                    }
-            }
-        }
-        if(pos < 0xFFFF){
-            pos++;
-        }
+		//escape sequence handling completed. 'c' now contains the next char of the payload.
+		switch(state){
+			case 0: //receive funcid, payload length
+				switch(pos){
+					case 0:
+						funcid = c<<8;
+						pos++;
+						break;
+					case 1:
+						funcid |= c;
+						pos++;
+						break;
+					case 2:
+						pos = c;
+						arglen = c;
+						state = 1;
+						break;
+				}
+				break;
+			case 1: //receive arg payload
+				pos--;
+				argbuf[pos] = c;
+				if(pos == 0)
+					state = 3;
+				break;
+			case 2: //receive and check payload crc. finally, call the function and send the return value
+				if(pos == 0){
+					crcbuf = c<<8;
+				}else{
+					//successfully received the crc
+					//FIXME add crc checking
+					if(funcid < NUM_CALLBACKS){
+						//HACK: The argument buffer is currently passed as the response buffer for ram efficiency.
+						//Only write to the response buffer *after* you are done reading from it.
+						uint8_t response_size = comm_callbacks[funcid](arglen, argbuf, ARGBUF_SIZE, argbuf);
+						putc_escaped(response_size); //response length
+						uint16_t crc = 0;
+						for(uint8_t i=0; i<response_size; i++){
+							putc_escaped(argbuf[response_size]);
+							//FIXME add crc generation
+						}
+						putc_escaped(crc >> 8);
+						putc_escaped(crc & 0xFF);
+					}else{
+						//FIXME error handling
+					}
+				}
+				break;
+		}
     }
 }
 

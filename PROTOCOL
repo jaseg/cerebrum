@@ -1,13 +1,8 @@
 
- "\\#" [1byte operation]
- "\\#" [0x01] [2bytes address] [1byte value] write register
- "\\#" [0x02] [2bytes address] read register
- "\\#" [0x03] [2bytes address] [1byte length] [n byte payload] write multiple registers
- "\\#" [0x04] [2bytes address] [1byte length] read multiple registers
+ '\\' characters anywhere are escaped as "\\\\"
 
- '\\' characters in the payload are escaped as "\\\\"
-
- "\\#" [2 bytes id] [1 byte length] [n bytes args] [dev:1 byte length]call function
+ "\\#" [2 bytes id] [1 byte length] [n bytes args] [2 byte crc] [dev:1 byte length] [n byte payload] [2 byte crc] call function
 
 special functions:
 0x00: get device descriptor
+	returns the lzma-ed json-encoded device descriptor

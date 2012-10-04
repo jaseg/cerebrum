@@ -6,6 +6,8 @@
             "location": "13982397",
             "serial": "/dev/msp0",
             "baudrate": 115200,
+			"version": 23,
+			"url": "http://jaseg.github.com/helights",
             "members": {
                 "rgb": {
                     "type": "timer-pwm-rgb",
@@ -23,20 +25,4 @@
             }
         }
     }
-}
-
-{
-	"rgb": {
-		"type": "timer-pwm-rgb",
-		"functions": {
-			"fade": {"addr": 0x100, "args": "fffi", "rval": ""}
-		},
-		"properties": {
-			"r": "f",
-			"g": "f",
-			"b": "f"
-		}
-	},
-	"_url": "http://jaseg.github.com/helights",
-	"_version": 23
 }
