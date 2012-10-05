@@ -1,7 +1,7 @@
 
  '\\' characters anywhere are escaped as "\\\\"
 
- "\\#" [2 bytes id] [1 byte length] [n bytes args] [2 byte crc] [dev:1 byte length] [n byte payload] [2 byte crc] call function
+ "\\#" [2 bytes id] [2 bytes length] [n bytes args] [2 byte crc] [dev:2 bytes length] [dev:n byte payload] [dev:2 byte crc] call function
 
 special functions:
 0x00: get device descriptor

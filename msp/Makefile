@@ -1,14 +1,15 @@
 
 MCU=msp430g2553
 
-all: helights
+all: main
 
-program: helights
-	mspdebug -s $(SERIAL) rf2500 "prog helights"
+program: main
+	mspdebug -s $(SERIAL) rf2500 "prog main"
 
-helights: helights.c uart_io.c fifo.c comm.c
-	msp430-gcc -mmcu=$(MCU) -g -std=gnu99 -o helights helights.c uart_io.c fifo.c comm.c autocode.c config.c -lm
+main: main.c uart_io.c fifo.c comm.c
+	msp430-gcc -mmcu=$(MCU) -g0 -O3 -ffunction-sections -Wl,--gc-sections,--relax -std=gnu99 -Xprint-map -o main main.c uart_io.c fifo.c comm.c autocode.c config.c -lm
+	msp430-size main
 
 clean:
-	rm helights || true
+	rm main || true
 

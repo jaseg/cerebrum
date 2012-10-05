@@ -12,7 +12,7 @@ void comm_loop(){
     static uint16_t funcid = 0;
 	static uint16_t crcbuf = 0;
 	static uint8_t argbuf[ARGBUF_SIZE];
-	static uint8_t arglen = 0;
+	static uint16_t arglen = 0;
 
     uint16_t v = uart_getc_nonblocking();
     uint8_t c = v&0xff;
@@ -43,8 +43,12 @@ void comm_loop(){
 						pos++;
 						break;
 					case 2:
+						arglen = c<<8;
+						pos++;
+						break;
+					case 3:
 						pos = c;
-						arglen = c;
+						arglen |= c;
 						state = 1;
 						break;
 				}
@@ -64,15 +68,7 @@ void comm_loop(){
 					if(funcid < NUM_CALLBACKS){
 						//HACK: The argument buffer is currently passed as the response buffer for ram efficiency.
 						//Only write to the response buffer *after* you are done reading from it.
-						uint8_t response_size = comm_callbacks[funcid](arglen, argbuf, ARGBUF_SIZE, argbuf);
-						putc_escaped(response_size); //response length
-						uint16_t crc = 0;
-						for(uint8_t i=0; i<response_size; i++){
-							putc_escaped(argbuf[response_size]);
-							//FIXME add crc generation
-						}
-						putc_escaped(crc >> 8);
-						putc_escaped(crc & 0xFF);
+						comm_callbacks[funcid](arglen, argbuf);
 					}else{
 						//FIXME error handling
 					}

@@ -33,10 +33,10 @@
 **/
 	
 ///\brief RX buffer size (Interrupt mode only)
-#define UIO_RXBUF_SIZE	64	///< \hideinitializer
+#define UIO_RXBUF_SIZE	8	///< \hideinitializer
 
 ///\brief TX buffer size (Interrupt mode only)
-#define UIO_TXBUF_SIZE	64	///< \hideinitializer
+#define UIO_TXBUF_SIZE	8	///< \hideinitializer
 
 /// \brief Select which USCI module to use
 #define UIO_USE_DEV		0	///< \hideinitializer

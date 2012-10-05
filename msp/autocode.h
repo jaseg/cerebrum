@@ -10,6 +10,6 @@ typedef unsigned int uint16_t;
 
 void init_auto(void);
 void loop_auto(void);
-uint8_t callback_get_descriptor_auto(uint8_t alen, uint8_t* argbuf, uint8_t respbuflen, uint8_t* respbuf);
+void callback_get_descriptor_auto(uint16_t alen, uint8_t* argbuf);
 
 #endif//_AUTOCODE_H_

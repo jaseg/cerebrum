@@ -1,0 +1,3 @@
+[submodule "lib/pylzma"]
+	path = lib/pylzma
+	url = https://github.com/fancycode/pylzma.git

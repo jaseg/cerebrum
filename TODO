@@ -1,0 +1,2 @@
+ * implement efficient accessor generation
+ * add device selection to the msp programmer w/ udev rules

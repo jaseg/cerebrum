@@ -13,3 +13,6 @@
 RF24
 tmp
 msp/autocode.c
+msp/config.c
+msp/main
+*/__pycache__
