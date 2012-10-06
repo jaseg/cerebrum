@@ -1,4 +1,3 @@
-
 /*
  Copyright (C) 2012 jaseg <s@jaseg.de>
 
@@ -9,7 +8,6 @@
 
 #include <msp430.h>
 #include "autocode.h"
-#include "comm.h"
 
 int main(void){
     WDTCTL = WDTPW | WDTHOLD; //Disable WDT
@@ -29,7 +27,6 @@ int main(void){
     _BIS_SR(GIE);
 
     for(;;){
-		comm_loop();
         loop_auto();
         unsigned int i = 0xffff;
         while(--i);
