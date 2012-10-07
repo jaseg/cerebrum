@@ -121,7 +121,7 @@ def generate(dev, devicename, builddate):
 
 	register_callback("callback_get_descriptor_auto")
 
-	def generate_accessors(name, ctype):
+	def generate_accessors(name, ctype, aval=1):
 		return Template(accessor_callbacks).render_unicode(name=name, bsize="({}*sizeof({}))".format(aval, ctype));
 
 	for mname, member in members.items():

@@ -69,11 +69,11 @@ rgbval hsv2rgb(hsvval in){
 
 #endif//_TIMER_PWM_RGB_STATIC_
 
-void ${init_function} (){
+void ${init_function()} (){
     //PWM Timer setup (uses both TIMER_As)
     TA0CTL = MC_2 | TASSEL_2; //Continous with SMCLK
     TA1CTL = MC_2 | TASSEL_2; //Continous with SMCLK
-% if "pwm_inverted" in dev and dev["pwm_inverted"]:
+% if "pwm_inverted" in member and member["pwm_inverted"]:
     TA0CCTL1 = OUTMOD_7;
     TA1CCTL1 = OUTMOD_7;
     TA1CCTL2 = OUTMOD_7;
@@ -91,7 +91,7 @@ void ${init_function} (){
 
 ${modulevar("col", "hsvval", "fff")} = {0.0, 1.0, 1.0};
 
-void ${loop_function} (){
+void ${loop_function()} (){
     rgbval rgb = hsv2rgb( ${modulevar("col")} );
     TA1CCR2 = gammatable[rgb.r]; // red
     TA0CCR1 = gammatable[rgb.g]; // green 

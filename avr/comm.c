@@ -1,3 +1,10 @@
+/*
+ Copyright (C) 2012 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
 
 #include <avr/io.h>
 #include <stdint.h>
@@ -74,8 +81,6 @@ void comm_loop(){
 						//FIXME add crc checking
 					}
 					if(funcid < num_callbacks){
-						//HACK: The argument buffer is currently passed as the response buffer for ram efficiency.
-						//Only write to the response buffer *after* you are done reading from it.
 						comm_callbacks[funcid](arglen, argbuf);
 					}else{
 						//FIXME error handling

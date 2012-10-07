@@ -2,4 +2,4 @@
  */
 
 extern unsigned int auto_config_descriptor_length;
-extern char auto_config_descriptor[];
+extern const char auto_config_descriptor[];
