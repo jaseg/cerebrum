@@ -1,2 +1,5 @@
  * implement efficient accessor generation
  * add device selection to the msp programmer w/ udev rules
+ * remove avr/util.c (it's nice, but it's also not needed anymore)
+ * inside generate.py, implement double buffering support for modulevar()
+ * pass the serial device where the avr is to be found down to the avr Makefile

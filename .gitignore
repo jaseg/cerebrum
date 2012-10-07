@@ -15,4 +15,5 @@ tmp
 msp/autocode.c
 msp/config.c
 msp/main
+builds
 */__pycache__

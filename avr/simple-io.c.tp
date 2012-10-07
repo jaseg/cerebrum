@@ -1,0 +1,45 @@
+/*
+ Copyright (C) 2012 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
+
+#include <avr/io.h>
+
+void ${module_callback("setState", "B")} (uint16_t argsize, uint8_t* args){
+	PORT${member["port"]} &= ~(1<<${member["pin"]});
+	if(args[0])
+		PORT${member["port"]} |= (1<<${member["pin"]});
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("getState", "", "B")} (uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+	uart_putc(PIN${member["port"]} & (1<<${member["pin"]}));
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("setDirection", "B")} (uint16_t argsize, uint8_t* args){
+	DDR${member["port"]} &= ~(1<<${member["pin"]});
+	if(args[0])
+		DDR${member["port"]} |= (1<<${member["pin"]});
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("getDirection", "", "B")} (uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+	uart_putc(DDR${member["port"]} & (1<<${member["pin"]}));
+	uart_putc(0x00);
+	uart_putc(0x00);
+}

@@ -85,7 +85,7 @@
 # The gcc tutorial http://www.mikrocontroller.net/articles/AVR-GCC-Tutorial
 # uses main.c as the main file, so you have to use the name main here.
 # On unix like systems (linux etc.) all file names are case sensitive!
-PROJECTNAME=cerebrum_firmware
+PROJECTNAME=main
 # <==
 
 # ==> MCU name
@@ -137,7 +137,7 @@ TARGET = $(PROJECTNAME)
 # CSRC = $(PROJECTNAME).cpp second.cpp third.cpp a.c another.c
 
 # List C and C++ files here
-CSRC = $(PROJECTNAME).c uart.c util.c spi.c led.c input.c 7seg.c pwm.c r0ketbeam.c config.c
+CSRC = $(PROJECTNAME).c uart.c util.c spi.c comm.c autocode.c config.c
 # <==
 
 
