@@ -12,8 +12,8 @@
 *.sym
 RF24
 tmp
-msp/autocode.c
-msp/config.c
+autocode.c
+config.c
 msp/main
 builds
 */__pycache__
