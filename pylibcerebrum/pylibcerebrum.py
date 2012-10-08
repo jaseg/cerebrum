@@ -21,6 +21,7 @@ class Ganglion:
 			self._ser.setXonXoff(True)
 			self._ser.setXonXoff(False)
 			self._opened_ser = self._ser
+			i=0
 			while True:
 				try:
 					self._config = self.read_config()
@@ -28,6 +29,9 @@ class Ganglion:
 				except TimeoutException:
 					print("Timeout")
 					pass
+				i += 1
+				if i > 10:
+					raise serial.serialutil.SerialException('Could not connect, giving up after 10 tries')
 		else:
 			self._config = config
 			self._ser = ser
