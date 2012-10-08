@@ -8,6 +8,18 @@
 
 #include <avr/io.h>
 
+void ${init_function()} (){
+% if member.get("timer_reg"):
+	${member["timer_reg"]} |= ${member["timer_flags"]};
+% endif
+% if member.get("adc_chsel"):
+	//FIXME this ought to be more device-independent.
+	//add device configs as in ethersex or would that be over-engineering?
+	ADMUX |= REFS0 | ADLAR;
+	ADCSRA |= ADEN | ADSC | ADFR | ADPS2 | ADPS1 | ADPS0;
+% endif
+}
+
 void ${module_callback("setState", "B")} (uint16_t argsize, uint8_t* args){
 	PORT${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
@@ -40,6 +52,65 @@ void ${module_callback("getDirection", "", "B")} (uint16_t argsize, uint8_t* arg
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(DDR${member["port"]} & (1<<${member["pin"]})));
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("readAnalog", "", "B")} (uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+% if member.get("adc_chsel"):
+	ADMUX &= 0xF0;
+	ADMUX |= ${module["adc_chsel"]};
+% else:
+	uart_putc(0x00);
+% endif
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("isAnalog", "", "B")} (uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+% if member.get("adc_chsel"):
+	uart_putc(ADCH);
+% else:
+	uart_putc(0x00);
+% endif
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("setPWM", "B", "")} (uint16_t argsize, uint8_t* args){
+% if member.get("pwm_reg"):
+	${member["pwm_reg"]} = args[0]'
+% endif
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("getPWM", "", "B")} (uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+% if member.get("pwm_reg"):
+	uart_putc(${member["pwm_reg"]});
+% else:
+	uart_putc(0x00);
+% endif
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${module_callback("isPWM", "", "B")} (uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+% if member.get("pwm_reg"):
+	uart_putc(0x01);
+% else:
+	uart_putc(0x00);
+% endif
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
