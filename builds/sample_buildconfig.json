@@ -1,39 +1,31 @@
 {
-    "baudrate": 57600, 
-    "protocol": "usbserial", 
-    "builddate": "2012-10-08 00:07:50.314648", 
     "url": "http://jaseg.github.com/cerebrum", 
     "version": 23, 
+    "type": "avr", 
+    "builddate": "2012-10-07 23:38:03", 
     "members": {
         "led": {
             "functions": {
                 "getState": {
                     "returns": "B", 
-                    "args": "", 
                     "id": 2
                 }, 
                 "getDirection": {
                     "returns": "B", 
-                    "args": "", 
                     "id": 4
                 }, 
                 "setDirection": {
-                    "returns": "", 
                     "args": "B", 
                     "id": 3
                 }, 
                 "setState": {
-                    "returns": "", 
                     "args": "B", 
                     "id": 1
                 }
             }, 
             "type": "simple-io", 
             "port": "B", 
-            "pin": 5, 
-            "properties": {}
+            "pin": 5
         }
-    }, 
-    "serial": "/dev/ttyACM0", 
-    "type": "avr"
+    }
 }

@@ -1,24 +1,12 @@
 {
-	"dev":{
-		"ar0": {
-			"protocol": "usbserial", 
-			"type": "avr",
-			"serial": "/dev/ttyACM0",
-			"baudrate": 57600,
-			"version": 23,
-			"url": "http://jaseg.github.com/cerebrum",
-			"members": {
-				"led": {
-					"type": "simple-io",
-					"port": "B",
-					"pin": 5
-				}
-			}
-		}
-	},
-	"log":{
-		"test": {
-			"led": "ar0.led"
+	"type": "avr",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+		"led": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 5
 		}
 	}
 }

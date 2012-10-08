@@ -5,70 +5,15 @@ import struct
 import pylzma
 
 class Ganglion:
-	def __init__(self, config=None, configfile=None, proxies=None):
-		if proxies is not None:
-			self._config = config
-			self._proxies = proxies
-			return
-		if configfile is not None:
-			cf = open(configfile, 'r')
-			config = cf.readlines()
-			cf.close()
-		parsed_config = config
-		if not isinstance(config, dict):
-			parsed_config = json.JSONDecoder().decode('\n'.join(config))
-		#FIXME add sanity check(s) here or just let it fail?
-		self._config = parsed_config["log"]
-		self._proxies = {}
-		for dname, dconf in parsed_config["dev"].items():
-			self._proxies[dname] = SerialProxy(dconf)
-	
-	def __del__(self):
-		self.close()
-
-	def close(self):
-		for name, proxy in self._proxies.items():
-			proxy.close()
-	
-	@property
-	def _log(self):
-		return list(self._config.keys())
-
-	@property
-	def _dev(self):
-		return list(self._proxies.keys())
-
-	def __dir__(self):
-		return self._log + self._dev + list(self.__dict__.keys())
-   
-	def __getattr__(self, name):
-		if name is "config":
-			raise AttributeError(name)
-		if name in self._config:
-			node = self._config[name]
-			if isinstance(node, str):
-				[dname, endpoint] = node.split('.')
-				return self._proxies[dname].__getattr__(endpoint)
-			else:
-				return Ganglion(config=node, proxies=self._proxies)
-		raise AttributeError(name)
-
-	def __setattr__(self, name, value):
-		if not name is "_config" and name in self._config:
-			[dname, endpoint] = self._config[name].split('.')
-			self._proxies[dname].set_value(endpoint, value)
-		else:
-			self.__dict__[name] = value
-
-class SerialProxy:
 	# NOTE: the device config is *not* the stuff from the config "dev" section but
 	#read from the device. It can also be found in that [devicename].config.json
 	#file created by the code generator
-	def __init__(self, config, ser=None):
+	def __init__(self, device=None, baudrate=115200, config=None, ser=None):
+		#FIXME HACK to et the initialization go smooth despite the __*__ special functions and "config" not yet being set
 		self._config = None
 		if ser is None:
-			#FIXME HACK to et the initialization go smooth despite the __*__ special functions and "config" not yet being set
-			self._ser = serial.Serial(config["serial"], config["baudrate"])
+			self._ser = serial.Serial(device, baudrate)
+			self._opened_ser = self._ser
 			self._config = self.read_config()
 		else:
 			self._config = config
@@ -78,7 +23,10 @@ class SerialProxy:
 		self.close()
 
 	def close(self):
-		self._ser.close()
+		try:
+			self._opened_ser.close()
+		except AttributeError:
+			pass
 
 	def read_config(self):
 		self._ser.write(b'\\#\x00\x00\x00\x00')
@@ -132,7 +80,7 @@ class SerialProxy:
 			raise AttributeError(name)
 
 		if "members" in self._config and name in self._config["members"]:
-			return SerialProxy(self._config["members"][name], self._ser)
+			return Ganglion(config=self._config["members"][name], ser=self._ser)
 
 		if "properties" in self._config and name in self._config["properties"]:
 			var = self._config["properties"][name]
@@ -141,6 +89,6 @@ class SerialProxy:
 		if "functions" in self._config and  name in self._config["functions"]:
 			fun = self._config["functions"][name]
 			def proxy_method(*args):
-				return self.callfunc(fun["id"], fun["args"], args, fun["returns"])
+				return self.callfunc(fun["id"], fun.get("args", ""), args, fun.get("returns", ""))
 			return proxy_method
 

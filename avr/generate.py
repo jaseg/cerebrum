@@ -20,7 +20,10 @@ autocode_stub = """\
  * in this very folder. Please refrain from modifying it, modify the templates
  * and generation logic instead.
  * 
- * Device name: ${devname}, build version: ${version}, build date: ${builddate}
+%if devname:
+ * Device name: ${devname},
+%endif
+ * Build version: ${version}, build date: ${builddate}
  */
 
 #include <string.h>
@@ -43,13 +46,13 @@ const uint16_t num_callbacks = ${len(callbacks)};
 void init_auto(){
 	% for initfunc in init_functions:
 		${initfunc}();
-	%endfor
+	% endfor
 }
 
 void loop_auto(){
 	% for loopfunc in loop_functions:
 		${loopfunc}();
-	%endfor
+	% endfor
 }
 
 void callback_get_descriptor_auto(uint16_t alen, uint8_t* argbuf){
@@ -128,9 +131,6 @@ def generate(dev, devicename, builddate):
 		mfile = member["type"]
 		mtype = mfile.replace('-', '_')
 		typepath = os.path.join(os.path.dirname(__file__), mfile + ".c.tp")
-#		 if not os.path.exists(typepath):
-#			 print("Cannot find a handler for member type " + dev["type"])
-#			 exit(1)
 
 		def init_function():
 			fun = "init_{}_{}".format(mtype, seqnum)
@@ -141,8 +141,8 @@ def generate(dev, devicename, builddate):
 			loop_functions.append(fun)
 			return fun
 
-		member["properties"] = {}
-		member["functions"] = {}
+		properties = {}
+		functions = {}
 		accessors = ""
 
 		def modulevar(name, ctype=None, fmt=None, array=False):
@@ -156,7 +156,7 @@ def generate(dev, devicename, builddate):
 
 				accid = register_callback("callback_get_" + varname)
 				register_callback("callback_set_" + varname)
-				member["properties"][name] = {
+				properties[name] = {
 						"size": struct.calcsize(fmt),
 						"id": accid,
 						"format": fmt}
@@ -170,12 +170,14 @@ def generate(dev, devicename, builddate):
 			return varname
 
 		def module_callback(name, argformat="", retformat=""):
-			cbname = "callback_{}_{}_{}".format(mtype, seqnum, name)
+			cbname = 'callback_{}_{}_{}'.format(mtype, seqnum, name)
 			cbid = register_callback(cbname)
-			member["functions"][name] = {
-					"id": cbid,
-					"args": argformat,
-					"returns": retformat}
+			func = { 'id': cbid }
+			if argformat is not '':
+				func['args'] = argformat
+			if retformat is not '':
+				func['returns'] = retformat
+			functions[name] = func
 			return cbname
 
 		seqnum += 1
@@ -188,17 +190,22 @@ def generate(dev, devicename, builddate):
 				member=member)
 		autocode += accessors
 
-	autocode += Template(autoglue).render_unicode(init_functions=init_functions, loop_functions=loop_functions, callbacks=callbacks)
-	with open(os.path.join(os.path.dirname(__file__), "autocode.c"), "w") as f:
-		f.write(autocode)
-	subprocess.call(["/usr/bin/env", "make", "-C", os.path.dirname(__file__), "clean", "all"])
-	config = pylzma.compress(json.JSONEncoder(separators=(',',':')).encode(dev))
-	with open(os.path.join(os.path.dirname(__file__), "config.c"), "w") as f:
-		f.write(Template(config_c_template).render_unicode(desc_len=len(config), desc=",".join(map(str, config))))
-	return dev
+		if functions:
+			member['functions'] = functions
+		if properties:
+			member['properties'] = properties
 
-def commit(dev):
+	autocode += Template(autoglue).render_unicode(init_functions=init_functions, loop_functions=loop_functions, callbacks=callbacks)
+	with open(os.path.join(os.path.dirname(__file__), 'autocode.c'), 'w') as f:
+		f.write(autocode)
+	config = pylzma.compress(json.JSONEncoder(separators=(',',':')).encode(dev))
+	with open(os.path.join(os.path.dirname(__file__), 'config.c'), 'w') as f:
+		f.write(Template(config_c_template).render_unicode(desc_len=len(config), desc=','.join(map(str, config))))
+	subprocess.call(['/usr/bin/env', 'make', '-C', os.path.dirname(__file__), 'clean', 'all'])
+	return dev, os.path.join(os.path.dirname(__file__), 'main.hex')
+
+def commit(args):
 	make_env = os.environ.copy()
-	make_env["PORT"] = dev["serial"] # "location" contains the launchpad's USB serial number
+	make_env["PORT"] = args.port
 	subprocess.call(["/usr/bin/env", "make", "-C", os.path.dirname(__file__), "program"], env=make_env)
 
