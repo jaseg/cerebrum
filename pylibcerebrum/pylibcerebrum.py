@@ -51,9 +51,7 @@ class Ganglion:
 		#since arglen==0 the crc is not needed
 		self._ser.write(b'\\#\x00\x00\x00\x00')
 		(clen,) = struct.unpack(">H", self.my_ser_read(2))
-		print(clen)
 		cbytes = self.my_ser_read(clen)
-		print(cbytes)
 		self.my_ser_read(2) #read and ignore the not-yet-crc
 		return json.JSONDecoder().decode(str(pylzma.decompress(cbytes), "UTF-8"))
 	
@@ -76,7 +74,7 @@ class Ganglion:
 		return []
 
 	def callfunc(self, fid, argsfmt, args, retfmt):
-		cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args) + b'\x00\x00' if struct.calcsize(argsfmt) > 0 else b''
+		cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args) + (b'\x00\x00' if struct.calcsize(argsfmt) > 0 else b'')
 		self._ser.write(cmd)
 		(clen,) = struct.unpack(">H", self.my_ser_read(2))
 		cbytes = self.my_ser_read(clen)
