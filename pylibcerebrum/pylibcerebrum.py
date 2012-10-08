@@ -92,3 +92,5 @@ class Ganglion:
 				return self.callfunc(fun["id"], fun.get("args", ""), args, fun.get("returns", ""))
 			return proxy_method
 
+		raise AttributeError(name)
+
