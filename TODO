@@ -1,8 +1,7 @@
- * Remove that whole dev/log indirection layer. Instead put unique device names
-   into the build config.
  * implement more efficient accessor generation
- * add device selection to the msp programmer w/ udev rules
+ * add device selection to the avr programmer w/ udev rules
  * remove avr/util.c (it's nice, but it's also not needed anymore)
  * inside generate.py, implement double buffering support for modulevar()
+ * automate the generation of marshaling/unmarshaling code on the device side
  * pass the serial device where the avr is to be found down to the avr Makefile
  * convert protocol to little endian
