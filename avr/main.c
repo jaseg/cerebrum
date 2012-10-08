@@ -24,7 +24,7 @@ int main(void){
 }
 
 void init(){
-    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(57600, F_CPU));
+    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
 	init_auto();
     sei();
 }

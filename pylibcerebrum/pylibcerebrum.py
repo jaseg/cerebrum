@@ -3,6 +3,10 @@ import serial
 import json
 import struct
 import pylzma
+import time
+
+class TimeoutException(Exception):
+	pass
 
 class Ganglion:
 	# NOTE: the device config is *not* the stuff from the config "dev" section but
@@ -12,9 +16,18 @@ class Ganglion:
 		#FIXME HACK to et the initialization go smooth despite the __*__ special functions and "config" not yet being set
 		self._config = None
 		if ser is None:
-			self._ser = serial.Serial(device, baudrate)
+			self._ser = serial.Serial(port=device, baudrate=baudrate, timeout=1)
+			#Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
+			self._ser.setXonXoff(True)
+			self._ser.setXonXoff(False)
 			self._opened_ser = self._ser
-			self._config = self.read_config()
+			while True:
+				try:
+					self._config = self.read_config()
+					break
+				except TimeoutException:
+					print("Timeout")
+					pass
 		else:
 			self._config = config
 			self._ser = ser
@@ -28,11 +41,20 @@ class Ganglion:
 		except AttributeError:
 			pass
 
+	def my_ser_read(self, n):
+		data = self._ser.read(n)
+		if len(data) is not n:
+			raise TimeoutException()
+		return data
+
 	def read_config(self):
+		#since arglen==0 the crc is not needed
 		self._ser.write(b'\\#\x00\x00\x00\x00')
-		(clen,) = struct.unpack(">H", self._ser.read(2))
-		cbytes = self._ser.read(clen)
-		self._ser.read(2) #read and ignore the not-yet-crc
+		(clen,) = struct.unpack(">H", self.my_ser_read(2))
+		print(clen)
+		cbytes = self.my_ser_read(clen)
+		print(cbytes)
+		self.my_ser_read(2) #read and ignore the not-yet-crc
 		return json.JSONDecoder().decode(str(pylzma.decompress(cbytes), "UTF-8"))
 	
 	@property
@@ -54,11 +76,11 @@ class Ganglion:
 		return []
 
 	def callfunc(self, fid, argsfmt, args, retfmt):
-		cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args) + b'\x00\x00'
+		cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args) + b'\x00\x00' if struct.calcsize(argsfmt) > 0 else b''
 		self._ser.write(cmd)
-		(clen,) = struct.unpack(">H", self._ser.read(2))
-		cbytes = self._ser.read(clen)
-		self._ser.read(2) #read and ignore the not-yet-crc
+		(clen,) = struct.unpack(">H", self.my_ser_read(2))
+		cbytes = self.my_ser_read(clen)
+		self.my_ser_read(2) #read and ignore the not-yet-crc
 		if clen is not struct.calcsize(retfmt):
 			#FIXME error handling
 			print("Length mismatch: {} != {}".format(clen, struct.calcsize(retfmt)))

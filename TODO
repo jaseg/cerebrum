@@ -1,3 +1,4 @@
+ * add timeouts in the serial protocol parsers
  * implement more efficient accessor generation
  * add device selection to the avr programmer w/ udev rules
  * remove avr/util.c (it's nice, but it's also not needed anymore)
