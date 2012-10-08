@@ -16,7 +16,7 @@ class Ganglion:
 		#FIXME HACK to et the initialization go smooth despite the __*__ special functions and "config" not yet being set
 		self._config = None
 		if ser is None:
-			self._ser = serial.Serial(port=device, baudrate=baudrate, timeout=1)
+			self._ser = serial.Serial(port=device, baudrate=baudrate, timeout=0.5)
 			#Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
 			self._ser.setXonXoff(True)
 			self._ser.setXonXoff(False)
@@ -30,8 +30,8 @@ class Ganglion:
 					print("Timeout")
 					pass
 				i += 1
-				if i > 10:
-					raise serial.serialutil.SerialException('Could not connect, giving up after 10 tries')
+				if i > 20:
+					raise serial.serialutil.SerialException('Could not connect, giving up after 20 tries')
 		else:
 			self._config = config
 			self._ser = ser
@@ -45,20 +45,12 @@ class Ganglion:
 		except AttributeError:
 			pass
 
-	def my_ser_read(self, n):
-		data = self._ser.read(n)
-		if len(data) is not n:
-			raise TimeoutException()
-		return data
+	def type(self):
+		return self._config["type"]
 
-	def read_config(self):
-		#since arglen==0 the crc is not needed
-		self._ser.write(b'\\#\x00\x00\x00\x00')
-		(clen,) = struct.unpack(">H", self.my_ser_read(2))
-		cbytes = self.my_ser_read(clen)
-		self.my_ser_read(2) #read and ignore the not-yet-crc
-		return json.JSONDecoder().decode(str(pylzma.decompress(cbytes), "UTF-8"))
-	
+	def __iter__(self):
+		return GanglionIter(self)
+
 	@property
 	def members(self):
 		if "members" in self._config:
@@ -76,6 +68,20 @@ class Ganglion:
 		if "functions" in self._config:
 			return list(self._config["functions"].keys())
 		return []
+
+	def my_ser_read(self, n):
+		data = self._ser.read(n)
+		if len(data) is not n:
+			raise TimeoutException()
+		return data
+
+	def read_config(self):
+		#since arglen==0 the crc is not needed
+		self._ser.write(b'\\#\x00\x00\x00\x00')
+		(clen,) = struct.unpack(">H", self.my_ser_read(2))
+		cbytes = self.my_ser_read(clen)
+		self.my_ser_read(2) #read and ignore the not-yet-crc
+		return json.JSONDecoder().decode(str(pylzma.decompress(cbytes), "UTF-8"))
 
 	def callfunc(self, fid, argsfmt, args, retfmt):
 		cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args) + (b'\x00\x00' if struct.calcsize(argsfmt) > 0 else b'')
@@ -117,4 +123,25 @@ class Ganglion:
 			return proxy_method
 
 		raise AttributeError(name)
+
+class GanglionIter:
+
+	def __init__(self, g):
+		self.g = g
+		self.keyiter = g.members.__iter__()
+		self.miter = None
+
+	def __iter__(self):
+		return self
+
+	def __next__(self):
+		try:
+			return self.miter.__next__()
+		except StopIteration:
+			pass
+		except AttributeError:
+			pass
+		foo = self.g.__getattr__(self.keyiter.__next__())
+		self.miter = foo.__iter__()
+		return foo
 
