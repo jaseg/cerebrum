@@ -1,8 +1,9 @@
- * add timeouts in the serial protocol parsers
+ * read-only/write-only parameters
+ * add timeouts in the device-side serial protocol parser
+ * add a "hardware configuration file" doing stuff like providing templates with hardware info ("where are my analog inputs?")
  * implement more efficient accessor generation
- * add device selection to the avr programmer w/ udev rules
  * remove avr/util.c (it's nice, but it's also not needed anymore)
  * inside generate.py, implement double buffering support for modulevar()
- * automate the generation of marshaling/unmarshaling code on the device side
  * pass the serial device where the avr is to be found down to the avr Makefile
  * convert protocol to little endian
+ * automate the generation of marshaling/unmarshaling code on the device side?

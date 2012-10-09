@@ -20,7 +20,8 @@ void ${init_function()} (){
 % endif
 }
 
-void ${module_callback("setState", "B")} (uint16_t argsize, uint8_t* args){
+//${modulevar("state", None, "B")}
+void callback_set_${modulevar("state")} (uint16_t argsize, uint8_t* args){
 	PORT${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
 		PORT${member["port"]} |= (1<<${member["pin"]});
@@ -30,7 +31,7 @@ void ${module_callback("setState", "B")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 }
 
-void ${module_callback("getState", "", "B")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("state")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(PIN${member["port"]} & (1<<${member["pin"]})));
@@ -38,7 +39,8 @@ void ${module_callback("getState", "", "B")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 }
 
-void ${module_callback("setDirection", "B")} (uint16_t argsize, uint8_t* args){
+//${modulevar("direction", None, "B")}
+void callback_set_${modulevar("direction")} (uint16_t argsize, uint8_t* args){
 	DDR${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
 		DDR${member["port"]} |= (1<<${member["pin"]});
@@ -48,7 +50,7 @@ void ${module_callback("setDirection", "B")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 }
 
-void ${module_callback("getDirection", "", "B")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("direction")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(DDR${member["port"]} & (1<<${member["pin"]})));
@@ -56,61 +58,34 @@ void ${module_callback("getDirection", "", "B")} (uint16_t argsize, uint8_t* arg
 	uart_putc(0x00);
 }
 
-void ${module_callback("readAnalog", "", "B")} (uint16_t argsize, uint8_t* args){
+% if member.get("adc_chsel"):
+//${modulevar("analog", None, "B")}
+void callback_get_${modulevar("analog")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
-% if member.get("adc_chsel"):
 	ADMUX &= 0xF0;
 	ADMUX |= ${module["adc_chsel"]};
-% else:
-	uart_putc(0x00);
-% endif
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
-
-void ${module_callback("isAnalog", "", "B")} (uint16_t argsize, uint8_t* args){
-	uart_putc(0x00);
-	uart_putc(0x01);
-% if member.get("adc_chsel"):
-	uart_putc(ADCH);
-% else:
-	uart_putc(0x00);
 % endif
-	uart_putc(0x00);
-	uart_putc(0x00);
-}
 
-void ${module_callback("setPWM", "B", "")} (uint16_t argsize, uint8_t* args){
 % if member.get("pwm_reg"):
+//${modulevar("pwm", None, "B")}
+void callback_set_${modulevar("pwm")} (uint16_t argsize, uint8_t* args){
 	${member["pwm_reg"]} = args[0]'
-% endif
 	uart_putc(0x00);
 	uart_putc(0x00);
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
 
-void ${module_callback("getPWM", "", "B")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("pwm")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
-% if member.get("pwm_reg"):
 	uart_putc(${member["pwm_reg"]});
-% else:
-	uart_putc(0x00);
-% endif
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
+% endif
 
-void ${module_callback("isPWM", "", "B")} (uint16_t argsize, uint8_t* args){
-	uart_putc(0x00);
-	uart_putc(0x01);
-% if member.get("pwm_reg"):
-	uart_putc(0x01);
-% else:
-	uart_putc(0x00);
-% endif
-	uart_putc(0x00);
-	uart_putc(0x00);
-}
