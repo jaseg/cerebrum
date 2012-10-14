@@ -1,0 +1,38 @@
+/*
+ Copyright (C) 2012 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
+
+#include <avr/io.h>
+#include <util/delay.h>
+
+${modulevar("buffer", "uint8_t", "{}B".format(member["length"]*3), array=member["length"]*3)} = {
+//   B     G     R
+% for i in range(member["length"]-1):
+	${1-i/member["length"]}*255,
+	0x00,
+	${i/member["length"]}*255,
+% endfor
+	0x00, 0x00, 0x00
+};
+
+void ${loop_function()}(void){
+	//for(uint8_t* i=${modulevar("buffer")}; i<${modulevar("buffer")}+${member["length"]*3}; i++){
+	static uint16_t iv = 0;
+	for(uint16_t i=0; i<${member["length"]}; i++){
+		uint16_t j=iv+i;
+		if(j>${member["length"]})
+			j-=${member["length"]};
+		spi_transfer(${modulevar("buffer")}[j*3]);
+		spi_transfer(${modulevar("buffer")}[j*3+1]);
+		spi_transfer(${modulevar("buffer")}[j*3+2]);
+	}
+	iv++;
+	if(iv>${member["length"]})
+		iv-=${member["length"]};
+	_delay_ms(10);
+}
+
