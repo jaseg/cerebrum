@@ -9,20 +9,13 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-void ${modulevar("buf")}_swapBuffers(void){
-	uint8_t* tmp = ${modulevar("internalBuffer")};
-	${modulevar("internalBuffer")} = ${modulevar("externalBuffer")};
-	${modulevar("externalBuffer")} = tmp;
-}
-
-void ${module_callback("setLED", "BB")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-	//args: num, val
-	uint8_t num = args[0];
-	uint8_t val = args[1];
-	if(num<32){
-		frameBuffer[num>>3] &= ~(1<<(num&7));
-		if(val)
-			frameBuffer[num>>3] |= 1<<(num&7);
+void ${modulevar("buf")}_commit(void){
+	uint8_t t = 0;
+	for(uint8_t i = 7; i>0; i--){
+		for(uint8_t j = 0; j<i; j++){
+			${modulevar("internalBuffer")}[i] |= ${modulevar("externalBuffer")}[t];
+			t++;
+		}
 	}
 }
 
@@ -30,23 +23,22 @@ void ${module_callback("setLED", "BB")} (uint16_t payload_offset, uint16_t argsi
 void ${loop_function} (){
 	static uint8_t row = 2;	//selects the currently active "row" of the matrix. On the
 							//protoboards I make, this more or less corresponds to physical traces.
-	uint8_t ddr = frameBuffer[i];
+	static uint8_t i = 0;
+	uint8_t ddr = ${modulevar("internalBuffer")}[i];
 	uint8_t port = ~ddr;
 	port |= row;
 	ddr |= row;
 	PORT${member["port"]} = port;
 	DDR${member["ddr"]} = ddr;
 	row <<= 1;
-	if(row == 0)
+	i++;
+	if(row == 0){
 		row = 2;
+		i = 0;
+	}
 }
 
 //this scary construct is in place to make the compiler happy. if you know a better way, feel free to improve.
-uint8_t ${modulevar("buf")}[7];
-uint8_t ${modulevar("buf2")}[7];
-uint8_t* ${modulevar("internalBuffer")} = ${modulevar("buf")};
-uint8_t* ${modulevar("externalBuffer")} = ${modulevar("buf2")};
-//generate accessors
-//CAUTION! Despite the c comment, this template command gets executed!
-//${modulevar("externalBuffer", "uint8_t", "7B", 7)}
+uint8_t ${modulevar("internalBuffer")}[7];
+uint8_t ${modulevar("externalBuffer", "uint8_t", "28B", 28, set_action=modulevar("buf")+"_commit();")};
 

@@ -19,20 +19,17 @@ ${modulevar("buffer", "uint8_t", "{}B".format(member["length"]*3), array=member[
 	0x00, 0x00, 0x00
 };
 
+${modulevar("offset", "uint16_t", "h") = 0;
+
 void ${loop_function()}(void){
 	//for(uint8_t* i=${modulevar("buffer")}; i<${modulevar("buffer")}+${member["length"]*3}; i++){
-	static uint16_t iv = 0;
 	for(uint16_t i=0; i<${member["length"]}; i++){
-		uint16_t j=iv+i;
+		uint16_t j=${modulevar("offset")}+i;
 		if(j>${member["length"]})
 			j-=${member["length"]};
 		spi_transfer(${modulevar("buffer")}[j*3]);
 		spi_transfer(${modulevar("buffer")}[j*3+1]);
 		spi_transfer(${modulevar("buffer")}[j*3+2]);
 	}
-	iv++;
-	if(iv>${member["length"]})
-		iv-=${member["length"]};
-	_delay_ms(10);
 }
 
