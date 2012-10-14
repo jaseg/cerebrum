@@ -183,6 +183,7 @@ def generate(desc, device, devicename, builddate):
 				accid = register_callback("callback_get_" + varname)
 				if "w" in access:
 					register_callback("callback_set_" + varname)
+
 				properties[name] = {
 						"size": struct.calcsize(fmt),
 						"id": accid,
@@ -193,7 +194,8 @@ def generate(desc, device, devicename, builddate):
 
 				if ctype is not None:
 					#NOTE: Even if the parameter is marked "read-only", a setter will be generated. I currently
-					#am too lazy to fix that since it does no harm because the linker will just throw it away.
+					#am too lazy to fix that since it does no harm because the linker will just throw it away since it
+					#is not registered and thus not used anywhere.
 					accessors += generate_accessors(varname, ctype, aval)
 					array_component = ""
 					if array == True:

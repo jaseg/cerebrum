@@ -68,7 +68,12 @@ There are a few python functions which can be used from module templates.
    callback. This callback will appear in this module instance's ```functions```
    section in the build config. ```argformat``` and ```retformat``` are the
    python struct format strings for the callback's arguments and return value,
-   respectively. They can be omitted.
+   respectively. They can be omitted. The callback is passed three arguments:
+    * an uint16_t containing the offset of the current block of data
+    * an uint16_t containing the size of the current block of data
+    * an uint8_t* pointing to the next block of data
+   If more data is sent to the function than ```ARGBUF_SIZE``` bytes (default:
+   32), the callback is called repeatedly with increasing ```payload_offset```.
 
 On top of that the templates can access pretty much all of python thanks to
 mako.
