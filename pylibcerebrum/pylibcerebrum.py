@@ -146,7 +146,7 @@ class Ganglion:
 			if self._config and "properties" in self._config and name in self._config["properties"]:
 				#call the property's Cerebrum setter function
 				var = self._config["properties"][name]
-				if not "w" in var.get("access", "r"):
+				if not "w" in var.get("access", "rw"):
 					raise TypeError("{} is a read-only property".format(name))
 				return self._callfunc(var["id"]+1, var["fmt"], [value], "")
 		#if the above code falls through, do a normal __dict__ lookup.
@@ -164,7 +164,9 @@ class Ganglion:
 			raise AttributeError(name)
 
 		if "members" in self._config and name in self._config["members"]:
-			return Ganglion(config=self._config["members"][name], ser=self._ser)
+			g = Ganglion(config=self._config["members"][name], ser=self._ser)
+			self.__dict__[name] = g
+			return g
 
 		if "properties" in self._config and name in self._config["properties"]:
 			var = self._config["properties"][name]

@@ -1,11 +1,5 @@
  * merge back changes on avr/generate.py to msp/generate.py
- * generate the ganglion tree statically on connect
- * add timeouts in the device-side serial protocol parser
- * implement more efficient accessor generation
- * remove avr/util.c (it's nice, but it's also not needed anymore)
  * share code between avr and msp
- * inside generate.py, implement double buffering support for modulevar()
- * pass the serial device where the avr is to be found down to the avr Makefile
+ * add timeouts in the device-side serial protocol parser
  * convert protocol to little endian
- * automate the generation of marshaling/unmarshaling code on the device side?
- * remove empty members?
+ * remove empty members in build configs?
