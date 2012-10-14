@@ -13,6 +13,7 @@
 		"D3": [2, "B"]
 	},
 	"adc": {
+		"prescaler_bits": "ADPS2 | ADPS1 | ADPS0",
 		"C0": 0,
 		"C1": 1,
 		"C2": 2,

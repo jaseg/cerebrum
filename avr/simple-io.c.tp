@@ -9,14 +9,12 @@
 #include <avr/io.h>
 
 void ${init_function()} (){
-% if member.get("timer_reg"):
-	${member["timer_reg"]} |= ${member["timer_flags"]};
+% if device["pwm"].get(member["port"]+str(member["pin"])):
+	${device["pwm"].get(member["port"]+str(member["pin"]))[2]}
 % endif
-% if member.get("adc_chsel"):
-	//FIXME this ought to be more device-independent.
-	//add device configs as in ethersex or would that be over-engineering?
+% if device["adc"].get(member["port"]+str(member["pin"])):
 	ADMUX |= REFS0 | ADLAR;
-	ADCSRA |= ADEN | ADSC | ADFR | ADPS2 | ADPS1 | ADPS0;
+	ADCSRA |= ADEN | device["adc"]["prescaler_bits"];
 % endif
 }
 
@@ -58,22 +56,32 @@ void callback_get_${modulevar("direction")} (uint16_t payload_offset, uint16_t a
 	uart_putc(0x00);
 }
 
-% if member.get("adc_chsel"):
+% if device["adc"].get(member["port"]+str(member["pin"])):
 //${modulevar("analog", None, "B")}
 void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
+#if defined(__AVR_ATmega48__) ||defined(__AVR_ATmega88__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega48P__) || defined(__AVR_ATmega88P__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__)
 	ADMUX &= 0xF0;
-	ADMUX |= ${module["adc_chsel"]};
+	ADMUX |= ${device["adc"].get(member["port"]+str(member["pin"]))};
+#elif defined(__AVR_ATmega2560__) || defined(__AVR_ATmega2561__) || defined(__AVR_ATmega1280__)  || defined(__AVR_ATmega1281__) || defined(__AVR_ATmega640__)
+	ADMUX &= 0xE0;
+	ADCSRB &= 0xF7;
+	ADMUX |= ${device["adc"].get(member["port"]+str(member["pin"]))}&0x1F;
+	ADCSRB |= ${device["adc"].get(member["port"]+str(member["pin"]))}&0x20>>2;
+#endif
+	while(!(ADCSRA&(1<<ADIF))); //wait for conversion to finish
+	uart_putc(ADCH);
+	ADCSRA |= (1<<ADIF); //reset the interrupt flag
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
 % endif
 
-% if member.get("pwm_reg"):
+% if device["pwm"].get(member["port"]+str(member["pin"])):
 //${modulevar("pwm", None, "B")}
 void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-	${member["pwm_reg"]} = args[0]'
+	OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]} = args[0];
 	uart_putc(0x00);
 	uart_putc(0x00);
 	uart_putc(0x00);
@@ -83,7 +91,7 @@ void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize
 void callback_get_${modulevar("pwm")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
-	uart_putc(${member["pwm_reg"]});
+	uart_putc(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]}${device["pwm"].get(member["port"]+str(member["pin"]))[1]});
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
