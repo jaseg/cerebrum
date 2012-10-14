@@ -16,7 +16,7 @@ void putc_escaped(char c);
  *
  *    return value: amount of data written to respbuf (in bytes)
  */
-typedef void (*comm_callback)(uint16_t, uint8_t*);
+typedef void (*comm_callback)(uint16_t, uint16_t, uint8_t*);
 extern comm_callback comm_callbacks[];
 extern const uint16_t num_callbacks;
 

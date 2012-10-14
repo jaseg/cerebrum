@@ -20,6 +20,7 @@ void comm_loop(){
 	static uint16_t crcbuf = 0;
 	static uint8_t argbuf[ARGBUF_SIZE];
 	static uint16_t arglen = 0;
+	static uint16_t payload_offset = 0;
 
     uint16_t v = uart_getc();
     uint8_t c = v&0xff;
@@ -40,10 +41,14 @@ void comm_loop(){
         }
 		//escape sequence handling completed. 'c' now contains the next char of the payload.
 		if(state == 1){ //receive arg payload
-			pos--;
 			argbuf[pos] = c;
-			if(pos == 0)
+			pos++;
+			if(pos == arglen)
 				state = 2;
+			if(pos == ARGBUF_SIZE){
+				payload_offset += ARGBUF_SIZE;
+				state = 2;
+			}
 		}else{
 			if(state == 0){//receive funcid, payload length
 				switch(pos){
@@ -61,7 +66,7 @@ void comm_loop(){
 						break;
 					case 3:
 						arglen |= c;
-						pos = arglen;
+						pos = 0;
 						if(arglen == 0)
 							state = 2;
 						else
@@ -71,21 +76,27 @@ void comm_loop(){
 			}
 			//receive and check payload crc. finally, call the function and send the return value
 			if(state == 2){
-				if(pos == 0 && arglen > 0){
+				if(pos == arglen && arglen > 0){
 					crcbuf = c<<8;
 					pos++;
 				}else{
-					if(arglen > 0){
+					if(pos > arglen){
 						crcbuf |= c;
 						//successfully received the crc
 						//FIXME add crc checking
 					}
 					if(funcid < num_callbacks){
-						comm_callbacks[funcid](arglen, argbuf);
+						comm_callbacks[funcid](payload_offset, arglen<ARGBUF_SIZE?arglen:ARGBUF_SIZE, argbuf);
 					}else{
 						//FIXME error handling
 					}
-					state = 0xFF;
+					if(arglen > ARGBUF_SIZE){
+						state = 1;
+						pos = 0;
+						arglen -= ARGBUF_SIZE;
+					}else{
+						state = 0xFF;
+					}
 				}
 			}
 		}

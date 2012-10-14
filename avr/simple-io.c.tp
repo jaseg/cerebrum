@@ -21,7 +21,7 @@ void ${init_function()} (){
 }
 
 //${modulevar("state", None, "B")}
-void callback_set_${modulevar("state")} (uint16_t argsize, uint8_t* args){
+void callback_set_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	PORT${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
 		PORT${member["port"]} |= (1<<${member["pin"]});
@@ -31,7 +31,7 @@ void callback_set_${modulevar("state")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 }
 
-void callback_get_${modulevar("state")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(PIN${member["port"]} & (1<<${member["pin"]})));
@@ -40,7 +40,7 @@ void callback_get_${modulevar("state")} (uint16_t argsize, uint8_t* args){
 }
 
 //${modulevar("direction", None, "B")}
-void callback_set_${modulevar("direction")} (uint16_t argsize, uint8_t* args){
+void callback_set_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	DDR${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
 		DDR${member["port"]} |= (1<<${member["pin"]});
@@ -50,7 +50,7 @@ void callback_set_${modulevar("direction")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 }
 
-void callback_get_${modulevar("direction")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(DDR${member["port"]} & (1<<${member["pin"]})));
@@ -60,7 +60,7 @@ void callback_get_${modulevar("direction")} (uint16_t argsize, uint8_t* args){
 
 % if member.get("adc_chsel"):
 //${modulevar("analog", None, "B")}
-void callback_get_${modulevar("analog")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	ADMUX &= 0xF0;
@@ -72,7 +72,7 @@ void callback_get_${modulevar("analog")} (uint16_t argsize, uint8_t* args){
 
 % if member.get("pwm_reg"):
 //${modulevar("pwm", None, "B")}
-void callback_set_${modulevar("pwm")} (uint16_t argsize, uint8_t* args){
+void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	${member["pwm_reg"]} = args[0]'
 	uart_putc(0x00);
 	uart_putc(0x00);

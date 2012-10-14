@@ -89,7 +89,7 @@ PROJECTNAME=main
 # <==
 
 # ==> MCU name
-MCU = atmega328p
+MCU = ${CHIP}
 # <==
 
 
@@ -137,7 +137,7 @@ TARGET = $(PROJECTNAME)
 # CSRC = $(PROJECTNAME).cpp second.cpp third.cpp a.c another.c
 
 # List C and C++ files here
-CSRC = $(PROJECTNAME).c uart.c util.c spi.c comm.c autocode.c config.c
+CSRC = $(PROJECTNAME).c uart.c util.c comm.c autocode.c config.c
 # <==
 
 
@@ -381,12 +381,12 @@ LDFLAGS += $(PRINTF_LIB) $(SCANF_LIB) $(MATH_LIB)
 
 
 # ==> Programming support using avrdude. Settings and variables.
-AVRDUDE_PROGRAMMER = arduino -b 115200
+AVRDUDE_PROGRAMMER = ${PROGRAMMER} -b ${BAUDRATE}
 # <==
 
 
 # ==> Choose the port used by the programmer
-AVRDUDE_PORT = /dev/ttyACM0
+AVRDUDE_PORT = ${PORT}
 # <==
 
 
@@ -523,7 +523,7 @@ gccversion :
 
 # Program the device.
 program: $(TARGET).hex $(TARGET).eep
-	sh -c 'echo>/dev/ttyACM0'
+	sh -c 'echo>'$(AVRDUDE_PORT)
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
 

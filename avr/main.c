@@ -45,5 +45,5 @@ void loop(){
 	comm_loop();
 	loop_auto();
 	//FIXME remove this delay?
-    _delay_us(100);
+    //_delay_us(100);
 }

@@ -15,7 +15,7 @@ void ${modulevar("buf")}_swapBuffers(void){
 	${modulevar("externalBuffer")} = tmp;
 }
 
-void ${module_callback("setLED", "BB")} (uint16_t argsize, uint8_t* args){
+void ${module_callback("setLED", "BB")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	//args: num, val
 	uint8_t num = args[0];
 	uint8_t val = args[1];

@@ -36,6 +36,7 @@ autocode_header = """\
 #include <string.h>
 #include "autocode.h"
 #include "comm.h"
+#include "uart.h"
 """
 
 #This one contains the actual callback/init/loop magick.
@@ -63,7 +64,7 @@ void loop_auto(){
 	% endfor
 }
 
-void callback_get_descriptor_auto(uint16_t alen, uint8_t* argbuf){
+void callback_get_descriptor_auto(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf){
 	//FIXME
 	uart_putc(auto_config_descriptor_length >> 8);
 	uart_putc(auto_config_descriptor_length & 0xFF);
@@ -79,15 +80,12 @@ void callback_get_descriptor_auto(uint16_t alen, uint8_t* argbuf){
 
 # Template for the accessor callbacks generated for each parameter
 accessor_callbacks = """
-void callback_set_${name}(uint16_t alen, uint8_t* argbuf){
-	if(! ${bsize} == alen){
-		//FIXME error handling
-		return;
-	}
-	memcpy(&${name}, argbuf, ${bsize});
+void callback_set_${name}(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf){
+	//FIXME add some error handling here or there?
+	memcpy(((char*)&${name})+payload_offset, argbuf, alen);
 }
 
-void callback_get_${name}(uint16_t alen, uint8_t* argbuf){
+void callback_get_${name}(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf){
 	if(! alen == 0){
 		//FIXME error handling
 		return;
@@ -115,12 +113,12 @@ const char auto_config_descriptor[] PROGMEM = {${desc}};
 """
 
 #FIXME possibly make a class out of this one
-def generate(dev, devicename, builddate):
-	members = dev["members"]
+def generate(desc, device, devicename, builddate):
+	members = desc["members"]
 	seqnum = 23 #module number (only used during build time to generate unique names)
 	current_id = 0
-	dev["builddate"] = str(builddate)
-	autocode = Template(autocode_header).render_unicode(devname=devicename, version=dev["version"], builddate=builddate)
+	desc["builddate"] = str(builddate)
+	autocode = Template(autocode_header).render_unicode(devname=devicename, version=desc["version"], builddate=builddate)
 	init_functions = []
 	loop_functions = []
 	callbacks = []
@@ -235,7 +233,8 @@ def generate(dev, devicename, builddate):
 				loop_function=loop_function,
 				modulevar=modulevar,
 				module_callback=module_callback,
-				member=member)
+				member=member,
+				device=device)
 		autocode += accessors
 
 		#Save some space in the build config (that later gets burned into the µC's really small flash!)
@@ -252,17 +251,22 @@ def generate(dev, devicename, builddate):
 	with open(os.path.join(os.path.dirname(__file__), 'autocode.c'), 'w') as f:
 		f.write(autocode)
 	#compress the build config and write it out
-	config = pylzma.compress(json.JSONEncoder(separators=(',',':')).encode(dev))
+	config = pylzma.compress(json.JSONEncoder(separators=(',',':')).encode(desc))
 	with open(os.path.join(os.path.dirname(__file__), 'config.c'), 'w') as f:
 		f.write(Template(config_c_template).render_unicode(desc_len=len(config), desc=','.join(map(str, config))))
 	#compile the whole stuff
-	subprocess.call(['/usr/bin/env', 'make', '-C', os.path.dirname(__file__), 'clean', 'all'])
+	make_env = os.environ.copy()
+	make_env["CHIP"] = device["chip"]
+	subprocess.call(['/usr/bin/env', 'make', '-C', os.path.dirname(__file__), 'clean', 'all'], env=make_env)
 
-	return dev, os.path.join(os.path.dirname(__file__), 'main.hex')
+	return desc, os.path.join(os.path.dirname(__file__), 'main.hex')
 
-def commit(args):
+def commit(device, args):
 	"""Flash the newly generated firmware onto the device"""
 	make_env = os.environ.copy()
+	make_env["CHIP"] = device["chip"]
 	make_env["PORT"] = args.port
+	make_env["PROGRAMMER"] = device["programmer"]
+	make_env["BAUDRATE"] = str(device["baudrate"])
 	subprocess.call(["/usr/bin/env", "make", "-C", os.path.dirname(__file__), "program"], env=make_env)
 
