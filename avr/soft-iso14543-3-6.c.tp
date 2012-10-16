@@ -2,7 +2,10 @@
 #ifndef _SOFT_ISO14543_3_6_
 #define _SOFT_ISO14543_3_6_
 
+//Structure of a iso14543-3-6 TP1 standard, extended and poll frame
 typedef struct {
+	unsigned char seqnum;
+	//I kind of hate the person concocting this control field. On the other hand, it is probably the result of the work (I won't say collaboration) of a number of persons equal to the population of a small country.
 	struct ctrl {				//Control field, always the first byte
 		unsigned char ft:1;			//Frame type: 0 - extended/poll; 1 - standard
 		unsigned char poll: 1;		//Poll frame - 1; otherwise 0
@@ -12,12 +15,12 @@ typedef struct {
 		unsigned char priority: 2;	//Priority: system/poll 0, urgent 2, normal 1, low 3
 									// if this is an ack frame: ack/nack 3, busy/nack+busy 0
 		unsigned char _: 2;			//Padding, always 00
-	};
-	struct ctrle {				//Extended control field (only present in *extended* *frames*)
+	}; //1 byte
+	struct ctrle {				//Extended control field (only present in -- you guessed it, extended frames)
 		unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
 		unsigned char hops:3;		//Hop count
 		unsigned char eff:4;		//Extended frame format: default 0, LTE-HEE extended address type 01xx
-	};
+	}; //1 byte
 	union sa {					//Source address
 		unsigned int i16;
 		struct phy {				//Physical address
@@ -25,7 +28,7 @@ typedef struct {
 			unsigned char line:4;		//Line
 			unsigned char device;		//Device
 		};
-	};
+	}; //1 word
 	union da {					//Destination address
 		unsigned int group;			//Group/poll group address
 		struct phy {				//Physical address
@@ -33,7 +36,7 @@ typedef struct {
 			unsigned char line:4;		//Line
 			unsigned char device;		//Device
 		};
-	};
+	}; //1 word
 	union aux {					//Various flags
 		struct std {				//Standard frame
 			unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
@@ -44,37 +47,93 @@ typedef struct {
 			unsigned char len;			//Payload length (0xFF is an escape code)
 		};
 		struct poll {				//Poll frame
-			unsigned char _:4;			//Padding
+			unsigned char _:4;			//Padding (0000)
 			unsigned char len:4;		//Number of poll responses expected
 		};
-	};
-	struct payload {			//Payload
-		unsigned char payload[255];
-	};
+	}; //1 byte
+	unsigned char payload[255];
 	unsigned char checksum;		//xor all bytes of the frame, invert.
 } iso14543_3_6_frame;
 
 #endif//_SOFT_ISO14543_3_6_
 
+${modulevar("frame", "iso14543_3_6_frame", "BBHHB255sB", set_action=modulevar("frame")+"_set_action");
+
+unsigned char ${modulevar("status")} = 0;
+unsigned char ${modulevar("checksum")} = 0;
+
 void ${init_function()} (void){
-	DDR${member["port"]} |= (1<<${member["tx_pin"]});
+	DDR${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
+	//set up pin change interrupt
 }
 
-void ${loop_function()} (void){
+//add pin change interrupt vector
 
+//XXX This module uses pin change interrupts since the pulses it tries to detect are only 34µs long (@16MHz ~= 512 cycles)
+//XXX This module uses one 16-bit timer
+//The timer is clocked with a 16934400Hz system clock overflows every 588 cycles. A bit is over every 1764 cycles.
+//The error of this timing is less than 1% compared to a 9600Bd reference.
+
+//Returns 0 on success, other stuff when an error occurs.
+char iso14543_send(unsigned char data){
+	${modulevar("checksum")} ^= data;
+	for(unsigned char i = 0; i<8; i++){
+		
+		unsigned char nd = data << 1;
+		if(nd < data){ //ft bit set
+			// i.e. (data * 2) mod 256 < data
+			// unsigned char => 0 < data < 256
+			// data < 128:
+			//   data * 2 < data => false
+			// data >= 128:
+			//   data * 2 - 256 == data + data - 256 < data - 1 < data
+			//Send logic 1: Leave the bus alone
+			//FIXME
+			//Watch out for collisions 
+		}else{
+			//Send logic 0: Short the bus
+			PORT${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
+			_delay_us(35); // Pulse duration -- 560 cycles
+			PORT${member["tx"]["port"]} &= ~(1<<${member["tx"]["pin"]});
+			//FIXME
+			//Watch out for collisions 
+		}
+		data = nd;
+	}
+	return 0;
 }
 
-void ${module_callback("send", "", "h")} (uint16_t offx, uint16_t blen, uint8_t buf){
+unsigned char ${modulevar("frame")}_send_frame(void){
 
-void ${module_callback("send", "", "h")} (uint16_t offx, uint16_t blen, uint8_t buf){
-	uint16_t rv = 0;
-	//fill frame and send
+	//Send frame header
+	${modulevar("checksum")} = 0;
+	${modulevar("state")} = 1;
+	iso14543_3_6_frame* f = &${modulevar("frame")};
+	unsigned char len = 0;
+	unsigned char e = 0;
 
-	//send back result
-	uart_putc(0x00);
-	uart_putc(0x02);
-	uart_putc(rv>>8);
-	uart_putc(rv&0xFF);
-	uart_putc(0x00);
-	uart_putc(0x00);
+	if(e = iso14543_send(f->ctrl))
+		return e;
+
+	if(!f->ctrl.poll ){
+		if( !f->ctrl.ft ){ //Extended frame
+			iso14543_send(f->ctrle);
+			len = f->aux.ext.len;
+		}else{
+			len = f->aux.std.len;
+		}
+	}
+	for(unsigned char *i= &(f->sa); i < &(f->payload)+len; i++){
+		if(e = iso14543_send(*i))
+			return e;
+	}
+	${modulevar("checksum")} ^= 0xFF; //invert
+	if(e = iso14543_send(${modulevar("checksum")}))
+		return e;
+	//Send status (yes, this is blocking.) 
+	return 0;
 }
+
+void ${modulevar("frame")}_set_action (void){
+}
+

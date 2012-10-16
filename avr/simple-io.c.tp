@@ -71,7 +71,7 @@ void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t args
 	ADCSRB |= ${device["adc"].get(member["port"]+str(member["pin"]))}&0x20>>2;
 #endif
 	while(!(ADCSRA&(1<<ADIF))); //wait for conversion to finish
-	uart_putc(ADCH);
+	putc_escaped(ADCH);
 	ADCSRA |= (1<<ADIF); //reset the interrupt flag
 	uart_putc(0x00);
 	uart_putc(0x00);
@@ -91,7 +91,7 @@ void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize
 void callback_get_${modulevar("pwm")} (uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
-	uart_putc(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]}${device["pwm"].get(member["port"]+str(member["pin"]))[1]});
+	putc_escaped(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]}${device["pwm"].get(member["port"]+str(member["pin"]))[1]});
 	uart_putc(0x00);
 	uart_putc(0x00);
 }

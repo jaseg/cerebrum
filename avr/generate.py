@@ -209,7 +209,7 @@ def generate(desc, device, devicename, builddate):
 
 			return varname
 
-		def module_callback(name, argformat="", retformat="", propfunc=False):
+		def module_callback(name, argformat="", retformat=""):
 			"""Register a regular module callback.
 			
 				I hereby officially discourage the (sole) use of this function since these callbacks or functions as they
