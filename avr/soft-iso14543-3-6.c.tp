@@ -1,0 +1,80 @@
+
+#ifndef _SOFT_ISO14543_3_6_
+#define _SOFT_ISO14543_3_6_
+
+typedef struct {
+	struct ctrl {				//Control field, always the first byte
+		unsigned char ft:1;			//Frame type: 0 - extended/poll; 1 - standard
+		unsigned char poll: 1;		//Poll frame - 1; otherwise 0
+									//ft/poll are used in ack frames as follows: ack/busy 11, nack/nack+busy 00
+		unsigned char r: 1;			//Repeat flag: 0 - repeated frame/ack frame; 1 - not repeated frame/poll frame
+		unsigned char ack: 1;		//Ack frame - 0; otherwise 1
+		unsigned char priority: 2;	//Priority: system/poll 0, urgent 2, normal 1, low 3
+									// if this is an ack frame: ack/nack 3, busy/nack+busy 0
+		unsigned char _: 2;			//Padding, always 00
+	};
+	struct ctrle {				//Extended control field (only present in *extended* *frames*)
+		unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
+		unsigned char hops:3;		//Hop count
+		unsigned char eff:4;		//Extended frame format: default 0, LTE-HEE extended address type 01xx
+	};
+	union sa {					//Source address
+		unsigned int i16;
+		struct phy {				//Physical address
+			unsigned char area:4;		//Area
+			unsigned char line:4;		//Line
+			unsigned char device;		//Device
+		};
+	};
+	union da {					//Destination address
+		unsigned int group;			//Group/poll group address
+		struct phy {				//Physical address
+			unsigned char area:4;		//Area
+			unsigned char line:4;		//Line
+			unsigned char device;		//Device
+		};
+	};
+	union aux {					//Various flags
+		struct std {				//Standard frame
+			unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
+			unsigned char hops:3;		//Hop count
+			unsigned char len:4;		//Payload length
+		};
+		struct ext {				//Extended frame
+			unsigned char len;			//Payload length (0xFF is an escape code)
+		};
+		struct poll {				//Poll frame
+			unsigned char _:4;			//Padding
+			unsigned char len:4;		//Number of poll responses expected
+		};
+	};
+	struct payload {			//Payload
+		unsigned char payload[255];
+	};
+	unsigned char checksum;		//xor all bytes of the frame, invert.
+} iso14543_3_6_frame;
+
+#endif//_SOFT_ISO14543_3_6_
+
+void ${init_function()} (void){
+	DDR${member["port"]} |= (1<<${member["tx_pin"]});
+}
+
+void ${loop_function()} (void){
+
+}
+
+void ${module_callback("send", "", "h")} (uint16_t offx, uint16_t blen, uint8_t buf){
+
+void ${module_callback("send", "", "h")} (uint16_t offx, uint16_t blen, uint8_t buf){
+	uint16_t rv = 0;
+	//fill frame and send
+
+	//send back result
+	uart_putc(0x00);
+	uart_putc(0x02);
+	uart_putc(rv>>8);
+	uart_putc(rv&0xFF);
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
