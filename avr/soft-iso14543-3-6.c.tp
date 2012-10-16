@@ -75,65 +75,119 @@ void ${init_function()} (void){
 //The error of this timing is less than 1% compared to a 9600Bd reference.
 
 //Returns 0 on success, other stuff when an error occurs.
-char iso14543_send(unsigned char data){
-	${modulevar("checksum")} ^= data;
-	for(unsigned char i = 0; i<8; i++){
-		
-		unsigned char nd = data << 1;
-		if(nd < data){ //ft bit set
-			// i.e. (data * 2) mod 256 < data
-			// unsigned char => 0 < data < 256
-			// data < 128:
-			//   data * 2 < data => false
-			// data >= 128:
-			//   data * 2 - 256 == data + data - 256 < data - 1 < data
-			//Send logic 1: Leave the bus alone
-			//FIXME
-			//Watch out for collisions 
-		}else{
-			//Send logic 0: Short the bus
-			PORT${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
-			_delay_us(35); // Pulse duration -- 560 cycles
-			PORT${member["tx"]["port"]} &= ~(1<<${member["tx"]["pin"]});
-			//FIXME
-			//Watch out for collisions 
-		}
-		data = nd;
+char iso14543_send_next_bit(unsigned char data){
+	static unsigned char i = 0;
+	static unsigned char nd = 0;
+	if(i == 0){
+		${modulevar("checksum")} ^= data;
+		nd = data;
+	}
+	data = nd;
+	nd = nd << 1;
+	if(nd < data){ //ft bit set
+		// i.e. (data * 2) mod 256 < data
+		// unsigned char => 0 < data < 256
+		// data < 128:
+		//   data * 2 < data => false
+		// data >= 128:
+		//   data * 2 - 256 == data + data - 256 < data - 1 < data
+		//Send logic 1: Leave the bus alone
+		//FIXME Watch out for collisions 
+	}else{
+		//Send logic 0: Short the bus
+		PORT${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
+		//FIXME Watch out for collisions 
+	}
+	data = nd;
+	i++;
+	if(i == 8){
+		i = 0;
+		return 1;
 	}
 	return 0;
 }
 
-unsigned char ${modulevar("frame")}_send_frame(void){
-
-	//Send frame header
-	${modulevar("checksum")} = 0;
-	${modulevar("state")} = 1;
+unsigned char ${modulevar("frame")}_send_next_frame_bit(void){
+	static unsigned char state = 0;
+	static unsigned char* pos = 0;
+	static unsigned char len = 0;
 	iso14543_3_6_frame* f = &${modulevar("frame")};
-	unsigned char len = 0;
 	unsigned char e = 0;
 
-	if(e = iso14543_send(f->ctrl))
-		return e;
-
-	if(!f->ctrl.poll ){
-		if( !f->ctrl.ft ){ //Extended frame
-			iso14543_send(f->ctrle);
-			len = f->aux.ext.len;
-		}else{
-			len = f->aux.std.len;
+	switch(state){
+		//Send frame header
+		case 0:
+		${modulevar("checksum")} = 0;
+		${modulevar("state")} = 1;
+		len = 0;
+		state = 1;
+		//This is supposed to fall through
+		case 1:
+		if(e = iso14543_send_next_bit(f->ctrl)){
+			if(e == 1){
+				state++;
+			}else{
+				return e;
+			}
 		}
+		break;
+		case 2:
+		if(!f->ctrl.poll ){
+			if( !f->ctrl.ft ){ //Extended frame
+				iso14543_send(f->ctrle);
+				len = f->aux.ext.len;
+			}else{
+				len = f->aux.std.len;
+			}
+		}
+		pos = &(f->sa);
+		state = 3;
+		//This is supposed to fall through
+		case 3:
+		if(e = iso14543_send_next_bit(*i)){
+			if(e == 1){
+				if(i < &(f->payload)+len){
+					i++;
+				}else{
+					state = 4;
+				}
+			}else{
+				return e;
+			}
+		}
+		break;
+		case 4:
+		${modulevar("checksum")} ^= 0xFF; //invert
+		//This is supposed to fall through
+		state = 5;
+		case 5:
+		if(e = iso14543_send_next_bit(${modulevar("checksum")})){
+			if(e == 1){
+				//Send status (yes, this is blocking from a python lib point of view.) 
+				state = 0;
+				${modulevar("state")} = 0;
+				return 0;
+			}else{
+				return e;
+			}
+		}
+		break;
 	}
-	for(unsigned char *i= &(f->sa); i < &(f->payload)+len; i++){
-		if(e = iso14543_send(*i))
-			return e;
+	return 1;
+}
+
+ISR(/*FIXME*/){
+	static unsigned char cnt = 0;
+	cnt++;
+	if(cnt == 3){
+		cnt = 0;
+		${modulevar("frame")}_send_next_frame_bit();
+	}else{
+		PORT${member["tx"]["port"]} &= ~(1<<${member["tx"]["pin"]});
 	}
-	${modulevar("checksum")} ^= 0xFF; //invert
-	if(e = iso14543_send(${modulevar("checksum")}))
-		return e;
-	//Send status (yes, this is blocking.) 
-	return 0;
 }
 
 void ${modulevar("frame")}_set_action (void){
+	${modulevar("state")} = 0;
 }
 
