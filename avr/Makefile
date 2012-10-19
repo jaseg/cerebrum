@@ -22,39 +22,7 @@
 #############################################################################
 #
 # Usage
-#######
-#
-# 1. Before compiling please tune all settings marked with ==> to
-#    match your requirements (up to the following <==).
-#    Settings not marked with ==> ... <== may be left unchanged usually.
-#
-# 2. On command line:
-#
-#     make            = Make software.
-#     make all        = Make software.
-#
-#     make clean      = Clean out built project files.
-#
-#     make coff       = Convert ELF to AVR COFF (for use with AVR Studio 3.x or VMLAB).
-#
-#     make extcoff    = Convert ELF to AVR Extended COFF (for use with AVR Studio
-#                       4.07 or greater).
-#
-#     make program    = Download the hex file to the device, using avrdude.  Please
-#                       customize the avrdude settings below first!
-#
-#     make filename.s = Just compile filename.c into the assembler code only
-#
-#     To rebuild your project do "make clean" then "make all".
-#
-#############################################################################
-#
-# Recent changes
-################
-#
-# mth 2004/09
-# Differences from WinAVR 20040720 sample:
-# - DEPFLAGS according to Eric Weddingtion's fix (avrfreaks/gcc-forum)
+-forum)
 # - F_OSC Define in CFLAGS and AFLAGS
 #
 # klaus?wachtler.de 2009/10/07
@@ -250,7 +218,7 @@ CFLAGS = -g$(DEBUG)
 CFLAGS += $(foreach ICDEF,$(EXTRA_CDEFS),-D"$(ICDEF)")
 CFLAGS += $(foreach ICUNDEF,$(EXTRA_CUNDEFS),-U$(ICUNDEF))
 CFLAGS += -O$(OPT)
-CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fms-extensions
 CFLAGS += -Wall
 CFLAGS += -Wa,-adhlns=$<.lst
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))

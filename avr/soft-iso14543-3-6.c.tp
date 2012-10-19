@@ -2,72 +2,99 @@
 #ifndef _SOFT_ISO14543_3_6_
 #define _SOFT_ISO14543_3_6_
 
-//Structure of a iso14543-3-6 TP1 standard, extended and poll frame
+//I kind of hate the person concocting this control field. On the other hand, it is probably the result of the work (I won't say collaboration) of a number of persons equal to the population of a small country.
+typedef struct {				//Control field, always the first byte
+	unsigned char ft:1;			//Frame type: 0 - extended/poll; 1 - standard
+	unsigned char poll: 1;		//Poll frame - 1; otherwise 0
+								//ft/poll are used in ack frames as follows: ack/busy 11, nack/nack+busy 00
+	unsigned char r: 1;			//Repeat flag: 0 - repeated frame/ack frame; 1 - not repeated frame/poll frame
+	unsigned char ack: 1;		//Ack frame - 0; otherwise 1
+	unsigned char priority: 2;	//Priority: system/poll 0, urgent 2, normal 1, low 3
+								// if this is an ack frame: ack/nack 3, busy/nack+busy 0
+	unsigned char _: 2;			//Padding, always 00
+} iso14543_3_6_frame_ctrl; //1 byte
+
 typedef struct {
-	unsigned char seqnum;
-	//I kind of hate the person concocting this control field. On the other hand, it is probably the result of the work (I won't say collaboration) of a number of persons equal to the population of a small country.
-	struct ctrl {				//Control field, always the first byte
-		unsigned char ft:1;			//Frame type: 0 - extended/poll; 1 - standard
-		unsigned char poll: 1;		//Poll frame - 1; otherwise 0
-									//ft/poll are used in ack frames as follows: ack/busy 11, nack/nack+busy 00
-		unsigned char r: 1;			//Repeat flag: 0 - repeated frame/ack frame; 1 - not repeated frame/poll frame
-		unsigned char ack: 1;		//Ack frame - 0; otherwise 1
-		unsigned char priority: 2;	//Priority: system/poll 0, urgent 2, normal 1, low 3
-									// if this is an ack frame: ack/nack 3, busy/nack+busy 0
-		unsigned char _: 2;			//Padding, always 00
-	}; //1 byte
-	struct ctrle {				//Extended control field (only present in -- you guessed it, extended frames)
+	unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
+	unsigned char hops:3;		//Hop count
+	unsigned char eff:4;		//Extended frame format: default 0, LTE-HEE extended address type 01xx
+} iso14543_3_6_frame_ctrle; //1 byte
+
+typedef union {
+	unsigned int i16;
+	struct {				//Physical address
+		unsigned char area:4;		//Area
+		unsigned char line:4;		//Line
+		unsigned char device;		//Device
+	};
+} iso14543_3_6_frame_address; //1 word
+
+//XXX The following frame definitions are missing the checksum because that is generated and checked on the fly during rx/tx.
+//"unsigned char checksum;"			//xor all bytes of the frame, invert.
+//Also, please note that where I'm talking about bytes, the iso norm talks about "octets".
+
+//Structure of a iso14543-3-6 TP1 standard frame
+typedef struct {
+	iso14543_3_6_frame_address sa;	//Source address
+	iso14543_3_6_frame_address da;	//Destination address
+	struct aux {					//Various flags
 		unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
 		unsigned char hops:3;		//Hop count
-		unsigned char eff:4;		//Extended frame format: default 0, LTE-HEE extended address type 01xx
+		unsigned char len:4;		//Payload length
 	}; //1 byte
-	union sa {					//Source address
-		unsigned int i16;
-		struct phy {				//Physical address
-			unsigned char area:4;		//Area
-			unsigned char line:4;		//Line
-			unsigned char device;		//Device
-		};
-	}; //1 word
-	union da {					//Destination address
-		unsigned int group;			//Group/poll group address
-		struct phy {				//Physical address
-			unsigned char area:4;		//Area
-			unsigned char line:4;		//Line
-			unsigned char device;		//Device
-		};
-	}; //1 word
-	union aux {					//Various flags
-		struct std {				//Standard frame
-			unsigned char at:1;			//Destination address type: physical/individual - 0; group - 1
-			unsigned char hops:3;		//Hop count
-			unsigned char len:4;		//Payload length
-		};
-		struct ext {				//Extended frame
-			unsigned char len;			//Payload length (0xFF is an escape code)
-		};
-		struct poll {				//Poll frame
-			unsigned char _:4;			//Padding (0000)
-			unsigned char len:4;		//Number of poll responses expected
-		};
-	}; //1 byte
+	unsigned char payload[15];
+} iso14543_3_6_std_frame;
+
+//Structure of a iso14543-3-6 TP1 extended frame
+typedef struct {
+	iso14543_3_6_frame_ctrle;		//Extended control field (only present in -- you guessed it, extended frames)
+	iso14543_3_6_frame_address sa;	//Source address
+	iso14543_3_6_frame_address da;	//Destination address
+	unsigned char len;				//Payload length (0xFF is an escape code)
 	unsigned char payload[255];
-	unsigned char checksum;		//xor all bytes of the frame, invert.
+} iso14543_3_6_ext_frame;
+
+//Structure of a iso14543-3-6 TP1 poll frame
+typedef struct {
+	iso14543_3_6_frame_address sa;	//Source address
+	uint16_t da;					//Poll group address
+	struct aux { //strange aux byte
+		unsigned char _:4;			//Padding (0000)
+		unsigned char len:4;		//Number of poll responses expected
+	}
+} iso14543_3_6_poll_frame;
+
+//Structure of a generic iso14543-3-6 TP1 frame
+typedef struct {
+	iso14543_3_6_frame_ctrl	ctrl;		//1 byte (if it's an ack sent w/o checksum)
+	union {
+		iso14543_3_6_std_frame	std;	//5-20 byte (+1 checksum)
+		iso14543_3_6_ext_frame	ext;	//6-261 byte (+1 checksum)
+		iso14543_3_6_poll_frame	poll;	//5 byte (+1 checksum)
+	}
+	unsigned char checksum;
 } iso14543_3_6_frame;
 
 #endif//_SOFT_ISO14543_3_6_
 
-${modulevar("frame", "iso14543_3_6_frame", "BBHHB255sB", set_action=modulevar("frame")+"_set_action");
+${modulevar("frame", "iso14543_3_6_frame", "BHHB255sB", set_action=modulevar("frame")+"_set_action")};
+${modulevar("extende_frame", None, "BBHHB255sB")};
 
-unsigned char ${modulevar("status")} = 0;
-unsigned char ${modulevar("checksum")} = 0;
+void callback_set_${modulevar("extended_frame")}(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf){
+	callback_set_${modulevar("frame")}(payload_offset, alen, argbuf);
+}
+
+void callback_get_${modulevar("extended_frame")}(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf){
+	callback_set_${modulevar("frame")}(payload_offset, alen, argbuf);
+}
+
+volatile unsigned char ${modulevar("status")} = 0;
+unsigned char* ${modulevar("endptr")} = 0;
 
 void ${init_function()} (void){
 	DDR${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
 	//set up pin change interrupt
 }
-
-//add pin change interrupt vector
 
 //XXX This module uses pin change interrupts since the pulses it tries to detect are only 34µs long (@16MHz ~= 512 cycles)
 //XXX This module uses one 16-bit timer
@@ -75,119 +102,102 @@ void ${init_function()} (void){
 //The error of this timing is less than 1% compared to a 9600Bd reference.
 
 //Returns 0 on success, other stuff when an error occurs.
-char iso14543_send_next_bit(unsigned char data){
-	static unsigned char i = 0;
-	static unsigned char nd = 0;
-	if(i == 0){
-		${modulevar("checksum")} ^= data;
-		nd = data;
+char ${modulevar("frame")_send_next_bit(){
+	static unsigned char bit = 0;
+	static unsigned char data = 0;
+	static unsigned char *pos = 0;
+	char res = 0;
+
+	bit++;
+	if(bit == 8){
+		bit = 0;
+
+		${modulevar("frame")}.checksum ^= data;
+
+		pos++;
+		if(pos > ${modulevar("endptr")}){
+			if(pos > &(${modulevar("frame")}.checksum)){ //End of frame, checksum sent
+				pos = &(${modulevar("frame")}.ctrl);
+				bit = 8;
+				res = -33;
+			}else{ //End of frame, send checksum
+				${modulevar("frame")}.checksum ^= 0xFF; //Invert
+				pos = &(${modulevar("frame")}.checksum);
+			}
+		}
+
+		data = *pos;
 	}
-	data = nd;
-	nd = nd << 1;
-	if(nd < data){ //ft bit set
+
+	unsigned char nd = data << 1;
+	if(nd < data){ //msb set
 		// i.e. (data * 2) mod 256 < data
 		// unsigned char => 0 < data < 256
 		// data < 128:
 		//   data * 2 < data => false
 		// data >= 128:
 		//   data * 2 - 256 == data + data - 256 < data - 1 < data
-		//Send logic 1: Leave the bus alone
-		//FIXME Watch out for collisions 
+		//send logic 1: leave the bus alone
+		res |= 1;
 	}else{
-		//Send logic 0: Short the bus
-		PORT${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
-		//FIXME Watch out for collisions 
+		//send logic 0: short the bus
+		port${member["tx"]["port"]} |= (1<<${member["tx"]["pin"]});
+		res &= ~1;
 	}
 	data = nd;
-	i++;
-	if(i == 8){
-		i = 0;
-		return 1;
-	}
-	return 0;
+
+	return res;
 }
 
-unsigned char ${modulevar("frame")}_send_next_frame_bit(void){
-	static unsigned char state = 0;
-	static unsigned char* pos = 0;
-	static unsigned char len = 0;
-	iso14543_3_6_frame* f = &${modulevar("frame")};
-	unsigned char e = 0;
-
-	switch(state){
-		//Send frame header
-		case 0:
-		${modulevar("checksum")} = 0;
-		${modulevar("state")} = 1;
-		len = 0;
-		state = 1;
-		//This is supposed to fall through
-		case 1:
-		if(e = iso14543_send_next_bit(f->ctrl)){
-			if(e == 1){
-				state++;
-			}else{
-				return e;
-			}
-		}
-		break;
-		case 2:
-		if(!f->ctrl.poll ){
-			if( !f->ctrl.ft ){ //Extended frame
-				iso14543_send(f->ctrle);
-				len = f->aux.ext.len;
-			}else{
-				len = f->aux.std.len;
-			}
-		}
-		pos = &(f->sa);
-		state = 3;
-		//This is supposed to fall through
-		case 3:
-		if(e = iso14543_send_next_bit(*i)){
-			if(e == 1){
-				if(i < &(f->payload)+len){
-					i++;
-				}else{
-					state = 4;
-				}
-			}else{
-				return e;
-			}
-		}
-		break;
-		case 4:
-		${modulevar("checksum")} ^= 0xFF; //invert
-		//This is supposed to fall through
-		state = 5;
-		case 5:
-		if(e = iso14543_send_next_bit(${modulevar("checksum")})){
-			if(e == 1){
-				//Send status (yes, this is blocking from a python lib point of view.) 
-				state = 0;
-				${modulevar("state")} = 0;
-				return 0;
-			}else{
-				return e;
-			}
-		}
-		break;
-	}
-	return 1;
-}
-
-ISR(/*FIXME*/){
+ISR(/*FIXME*/){ //Timer overflow @ 1/3 cycle
 	static unsigned char cnt = 0;
+	unsigned char e = 0;
 	cnt++;
 	if(cnt == 3){
 		cnt = 0;
-		${modulevar("frame")}_send_next_frame_bit();
+		unsigned char state = ${modulevar("state")};
+		if(state >= 0){ //Data transfer in progress
+			${modulevar("state")} = ${modulevar("frame")}_send_next_bit();
+		}else if(state < 33){
+			state--; //Decrement timeout before initiation of new bus action
+		}
 	}else{
 		PORT${member["tx"]["port"]} &= ~(1<<${member["tx"]["pin"]});
 	}
 }
 
+ISR(/*FIXME*/){ //PCInt
+	if(/*pin check*/){
+		if(${modulevar("state") >= 0){ //Currently transmitting
+			if(!(${modulevar("state")}&1) && !!(/*input pin state*/)){ //If a 1 is on the wire although none was sent
+				//Collision! Idle for 50 cycles, retry.
+				${modulevar("state")} = -33-50; //Prevent the transmission of any further bits
+			}
+		}else{
+			if(modulevar("state") == -33){ //Idle
+				//Somebody else is sending. Set a timeout for 53 cycles.
+				${modulevar("state")} = -33-53; //Prevent the transmission a frame
+			}
+		}
+	}
+}
+
+//add pin change interrupt vector
+
 void ${modulevar("frame")}_set_action (void){
-	${modulevar("state")} = 0;
+	iso14543_3_6_frame* f = &${modulevar("frame")};
+
+	f->checksum = 0;
+	if(!f->ctrl.poll ){
+		if( !f->ctrl.ft ){ //Extended frame
+			${modulevar("endptr")} = &(f->ext.len) + f->ext.len;
+		}else{ //Standard frame
+			${modulevar("endptr")} = &(f->std.aux) + f->std.len;
+		}
+	}else{ //Poll frame
+		${modulevar("endptr")} = &(f->poll.aux);
+	}
+	
+	${modulevar("state")} = 2;
 }
 
