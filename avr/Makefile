@@ -22,7 +22,6 @@
 #############################################################################
 #
 # Usage
--forum)
 # - F_OSC Define in CFLAGS and AFLAGS
 #
 # klaus?wachtler.de 2009/10/07

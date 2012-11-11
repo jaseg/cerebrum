@@ -10,7 +10,7 @@ import struct
 from mako.template import Template
 import binascii
 import json
-import pylzma
+import lzma
 import codecs
 """Automatic Cerebrum c code generator, this one being AVR-flavored"""
 
@@ -254,7 +254,7 @@ def generate(desc, device, devicename, builddate):
 	with open(os.path.join(os.path.dirname(__file__), 'autocode.c'), 'w') as f:
 		f.write(autocode)
 	#compress the build config and write it out
-	config = pylzma.compress(json.JSONEncoder(separators=(',',':')).encode(desc))
+	config = lzma.compress(bytes(json.JSONEncoder(separators=(',',':')).encode(desc), 'ASCII'))
 	with open(os.path.join(os.path.dirname(__file__), 'config.c'), 'w') as f:
 		f.write(Template(config_c_template).render_unicode(desc_len=len(config), desc=','.join(map(str, config))))
 	#compile the whole stuff

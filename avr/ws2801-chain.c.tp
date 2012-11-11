@@ -8,18 +8,24 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include "spi.h"
 
 ${modulevar("buffer", "uint8_t", "{}B".format(member["length"]*3), array=member["length"]*3)} = {
 //   B     G     R
 % for i in range(member["length"]-1):
-	${1-i/member["length"]}*255,
-	0x00,
-	${i/member["length"]}*255,
+	//${1-i/member["length"]}*255,
+	//0x00,
+	//${i/member["length"]}*255,
+% if i < 16:
+	0xFF, 0xFF, 0xFF,
+% else:
+	0x00, 0x00, 0x00,
+% endif
 % endfor
 	0x00, 0x00, 0x00
 };
 
-${modulevar("offset", "uint16_t", "h") = 0;
+${modulevar("offset", "uint16_t", "h")} = 0;
 
 void ${loop_function()}(void){
 	//for(uint8_t* i=${modulevar("buffer")}; i<${modulevar("buffer")}+${member["length"]*3}; i++){
@@ -31,5 +37,9 @@ void ${loop_function()}(void){
 		spi_transfer(${modulevar("buffer")}[j*3+1]);
 		spi_transfer(${modulevar("buffer")}[j*3+2]);
 	}
+	${modulevar("offset")}+=10;
+	if(${modulevar("offset")}>=512)
+		${modulevar("offset")}=0;
+	_delay_ms(1);
 }
 
