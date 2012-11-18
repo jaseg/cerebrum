@@ -1,0 +1,18 @@
+
+{
+	"type": "msp",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+		"led1": {
+			"type": "simple-io",
+			"port": 1,
+			"pin": 0
+		},
+		"led2": {
+			"type": "simple-io",
+			"port": 1,
+			"pin": 6
+		}
+	}
+}

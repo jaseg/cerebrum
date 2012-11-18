@@ -1,0 +1,51 @@
+/*
+ Copyright (C) 2012 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
+
+#include <msp430.h>
+
+void ${init_function()} (void){
+}
+
+//${modulevar("state", None, "B")}
+void callback_set_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+	P${member["port"]}OUT &= ~(1<<${member["pin"]});
+	if(args[0])
+		P${member["port"]}OUT |= (1<<${member["pin"]});
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void callback_get_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+	uart_putc(!!(P${member["port"]}IN & (1<<${member["pin"]})));
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+//${modulevar("direction", None, "B")}
+void callback_set_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+	P${member["port"]}DIR &= ~(1<<${member["pin"]});
+	if(args[0])
+		P${member["port"]}DIR |= (1<<${member["pin"]});
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void callback_get_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+	uart_putc(0x00);
+	uart_putc(0x01);
+	uart_putc(!!(P${member["port"]}DIR & (1<<${member["pin"]})));
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
