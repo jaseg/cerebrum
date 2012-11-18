@@ -447,6 +447,11 @@ ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 all: begin gccversion sizebefore build sizeafter finished end
 
+# Cerebrum comm debug target
+
+test:
+	gcc -std=gnu99 -DTEST -DF_CPU=16000000 -DRAMEND=0xFFFF -o comm-test comm.c main.c fake_uart.c autocode.c config.c
+
 build: elf hex eep lss sym
 
 elf: $(TARGET).elf
@@ -604,6 +609,7 @@ clean_list :
 	$(REMOVE) .deppp/*
 	$(REMOVE) *.bak  *.BAK *~ *.o *.s *.lst
 	$(REMOVE) RF24/*.o RF24/*.s RF24/*.lst
+	$(REMOVE) comm-test
 
 
 

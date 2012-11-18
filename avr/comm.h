@@ -2,6 +2,8 @@
 #ifndef __COMM_H__
 #define __COMM_H__
 
+#include "fake_io.h"
+
 void comm_loop(void);
 void putc_escaped(char c);
 

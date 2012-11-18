@@ -158,7 +158,7 @@ ISR(/*FIXME*/){ //Timer overflow @ 1/3 cycle
 		unsigned char state = ${modulevar("state")};
 		if(state >= 0){ //Data transfer in progress
 			${modulevar("state")} = ${modulevar("frame")}_send_next_bit();
-		}else if(state < 33){
+		}else if(state < -33){
 			state--; //Decrement timeout before initiation of new bus action
 		}
 	}else{

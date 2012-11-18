@@ -6,7 +6,6 @@
  version 3 as published by the Free Software Foundation.
  */
 
-#include <avr/io.h>
 #include <stdint.h>
 #include <stddef.h>
 #include "comm.h"
@@ -50,6 +49,7 @@ void comm_loop(){
 				state = 2;
 			}
 		}else{
+            //at this point, state would better be 0
 			if(state == 0){//receive funcid, payload length
 				switch(pos){
 					case 0:
@@ -74,29 +74,29 @@ void comm_loop(){
 						break;
 				}
 			}
-			//receive and check payload crc. finally, call the function and send the return value
-			if(state == 2){
-				if(pos == arglen && arglen > 0){
-					crcbuf = c<<8;
-					pos++;
+		}
+		//receive and check payload crc. finally, call the function and send the return value
+		if(state == 2){
+			if(pos == arglen && arglen > 0){
+				crcbuf = c<<8;
+				pos++;
+			}else{
+				if(pos > arglen){
+					crcbuf |= c;
+					//successfully received the crc
+					//FIXME add crc checking
+				}
+				if(funcid < num_callbacks){
+					comm_callbacks[funcid](payload_offset, arglen<ARGBUF_SIZE?arglen:ARGBUF_SIZE, argbuf);
 				}else{
-					if(pos > arglen){
-						crcbuf |= c;
-						//successfully received the crc
-						//FIXME add crc checking
-					}
-					if(funcid < num_callbacks){
-						comm_callbacks[funcid](payload_offset, arglen<ARGBUF_SIZE?arglen:ARGBUF_SIZE, argbuf);
-					}else{
-						//FIXME error handling
-					}
-					if(arglen > ARGBUF_SIZE){
-						state = 1;
-						pos = 0;
-						arglen -= ARGBUF_SIZE;
-					}else{
-						state = 0xFF;
-					}
+					//FIXME error handling
+				}
+				if(arglen > ARGBUF_SIZE){
+					state = 1;
+					pos = 0;
+					arglen -= ARGBUF_SIZE;
+				}else{
+					state = 0xFF;
 				}
 			}
 		}

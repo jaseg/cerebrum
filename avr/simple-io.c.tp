@@ -8,9 +8,9 @@
 
 #include <avr/io.h>
 
-void ${init_function()} (){
+void ${init_function()} (void){
 % if device["pwm"].get(member["port"]+str(member["pin"])):
-	${device["pwm"].get(member["port"]+str(member["pin"]))[2]}
+	${device["pwm"].get(member["port"]+str(member["pin"]))[1]}
 % endif
 % if device["adc"].get(member["port"]+str(member["pin"])):
 	ADMUX |= REFS0 | ADLAR;
@@ -88,10 +88,10 @@ void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize
 	uart_putc(0x00);
 }
 
-void callback_get_${modulevar("pwm")} (uint16_t argsize, uint8_t* args){
+void callback_get_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
-	putc_escaped(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]}${device["pwm"].get(member["port"]+str(member["pin"]))[1]});
+	putc_escaped(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]});
 	uart_putc(0x00);
 	uart_putc(0x00);
 }

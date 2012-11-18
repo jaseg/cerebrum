@@ -3,10 +3,20 @@
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
 	"members": {
-		"led": {
+		"r": {
 			"type": "simple-io",
 			"port": "B",
-			"pin": 5
+			"pin": 1
+		},
+		"g": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 2
+		},
+		"b": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 3
 		}
 	}
 }

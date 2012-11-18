@@ -6,14 +6,16 @@
  version 3 as published by the Free Software Foundation.
  */
 
-#include "config.h"
-#include <avr/io.h>
-#include <util/delay.h>
-#include <avr/pgmspace.h>
+#ifndef TEST
 #include <avr/interrupt.h>
-#include "uart.h"
+#include <avr/io.h>
+#else
+#define sei()
+#endif//TEST
 #include "comm.h"
 #include "autocode.h"
+#include "config.h"
+#include "uart.h"
 
 void init(void);
 void loop(void);
@@ -30,20 +32,6 @@ void init(){
 }
 
 void loop(){
-	/* FIXME HISTORIC DOC ONLY
-#ifdef HAS_NOISE_MAKER_SUPPORT
-	case 'x':
-		//DDRF |= 0x01;
-		//PORTF |= 0x01;
-		break;
-	case 'X':
-		//DDRF &= 0xFE;
-		//PORTF &= 0xFE;
-		break;
-#endif//HAS_NOISE_MAKER_SUPPORT
-		*/
 	comm_loop();
 	loop_auto();
-	//FIXME remove this delay?
-    //_delay_us(100);
 }

@@ -9,7 +9,10 @@
 import serial
 import json
 import struct
-import pylzma
+try:
+	import lzma
+except:
+    import pylzma as lzma
 import time
 """Call RPC functions on serially connected devices over the Cerebrum protocol."""
 
@@ -106,7 +109,7 @@ class Ganglion:
 	def _my_ser_read(self, n):
 		"""Read n bytes from the serial device and raise a TimeoutException in case of a timeout."""
 		data = self._ser.read(n)
-		if len(data) is not n:
+		if len(data) != n:
 			raise TimeoutException()
 		return data
 
@@ -117,7 +120,7 @@ class Ganglion:
 		(clen,) = struct.unpack(">H", self._my_ser_read(2))
 		cbytes = self._my_ser_read(clen)
 		self._my_ser_read(2) #read and ignore the not-yet-crc
-		return json.JSONDecoder().decode(str(pylzma.decompress(cbytes), "UTF-8"))
+		return json.JSONDecoder().decode(str(lzma.decompress(cbytes), "ASCII"))
 
 	def _callfunc(self, fid, argsfmt, args, retfmt):
 		"""Call a function on the device by id, directly passing argument/return format parameters."""
