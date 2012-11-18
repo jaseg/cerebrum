@@ -1,5 +1,6 @@
 *.eep
 *.lss
+*.pyc
 *.lst
 *.hex
 *.o
