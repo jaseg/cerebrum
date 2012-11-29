@@ -11,18 +11,14 @@
 #include <stdlib.h>
 
 void uart_init(unsigned int baudrate){
-    //Nop
+    //WELCOME YOU WILL EXPERIENCE A TINGLING SENSATION AN THEN DEATH REMAIN CALM WHILE YOUR LIFE IS EXTRACTED
 }
 
 void uart_putc(unsigned char c){
-    printf("%c", c);
+    printf("[DEBUG] sending: %c\n", c);
 }
 
-unsigned int uart_getc(){
-    int c = getchar();
-    if(c==EOF){
-        exit(0);
-    }
-    return c;
+int16_t uart_getc(){
+    return getchar();
 }
 

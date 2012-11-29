@@ -12,6 +12,7 @@ import json
 import imp
 import datetime
 import argparse
+import generator
 """Generate firmware for Cerebrum devices according to a json-formatted device configuration passed on the command line."""
 
 # Parse arguments
@@ -34,13 +35,11 @@ print(builddate)
 print('Generating firmware from ', buildsource)
 
 # Import code generator module
-typepath = os.path.join(os.path.dirname(__file__), desc["type"], "generate.py")
-print('Using generator ', typepath)
-ctx = imp.load_source("generate", typepath)
+build_path = os.path.join(os.path.dirname(__file__), desc["type"])
 
 # Generate code and write generated build config
-#FIXME there are two different but similar things called "build config" here.
-(buildconfig, output) = ctx.generate(desc, device, args.buildname, builddate)
+# FIXME there are two different but similar things called "build config" here.
+buildconfig = generator.generate(desc, device, build_path, builddate)
 with open(os.path.join(os.path.dirname(__file__), "builds", builddate + "-" + args.buildname if args.buildname else os.path.splitext(os.path.basename(buildsource))[0] + ".config.json"), "w") as f:
 	f.write(json.JSONEncoder(indent=4).encode(buildconfig))
 	print('Wrote build config to ', f.name)
@@ -48,7 +47,7 @@ with open(os.path.join(os.path.dirname(__file__), "builds", builddate + "-" + ar
 # Flash the device if requested
 if args.port or args.usbserial:
 	print('Programming device')
-	ctx.commit(device, args)
+	generator.commit(device, args)
 
 # ???
 

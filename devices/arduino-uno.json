@@ -2,7 +2,7 @@
 	"type": "avr",
 	"programmer": "arduino",
 	"baudrate": 115200,
-	"chip": "atmega328p",
+	"mcu": "atmega328p",
 	"clock": 16000000,
 	"pwm": {
 		"D6": ["0A", "TCCR0A |= (1<<COM0A1) | (1<<WGM00) | (1<<WGM01); TCCR0B |= (1<<CS00);"],

@@ -2,7 +2,7 @@
 	"type": "avr",
 	"programmer": "stk500v2",
 	"baudrate": 115200,
-	"chip": "atmega2560",
+	"mcu": "atmega2560",
 	"clock": 16000000,
 	"pwm": {
 		"B7": [0, "A", "TCCR0A |= (1<<COM0A1) | (1<<WGM0) | (1<<WGM1); TCCR0B |= (1<<CS00);"],

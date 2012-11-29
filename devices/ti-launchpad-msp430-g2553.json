@@ -1,4 +1,4 @@
 {
 	"type": "msp",
-	"chip": "msp430g2553"
+	"mcu": "msp430g2553"
 }

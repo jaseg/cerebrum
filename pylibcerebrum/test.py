@@ -1,4 +1,3 @@
-
 from pylibcerebrum.pylibcerebrum import Ganglion
 import unittest
 
@@ -17,17 +16,29 @@ class TestGanglion(avr.generate.TestCommStuff):
 
         g = Ganglion(ser=fs)
         g.config = g._read_config()
+        self.assertEqual(fs.out, b'\\#\x00\x00\x00\x00', 'The ganglion sent garbage trying to read the device config.')
+        self.assert_('version' in g.config, 'The ganglion has an invalid config without a version attribute')
+        self.assertEqual(g.config['version'], 0.17, 'The ganglion\'s config\'s version attribute is wrong')
+        self.assert_('members' in g.config, 'The ganglion has an invalid config without a \'members\' attribute')
+        self.assertEqual(g.config['members'], {}, 'The ganglion\'s config\'s memers attribute is not an empty hash')
 
     def test_attribute_read(self):
-        pass
+        fs = FakeSerial()
+        g = Ganglion(ser=fs)
+        g.config = {'version': 0.17, 'builddate': '2012-05-23 23:42:17', 'members': {"led": {"type": "test", "properties": {"test": {"fmt": "B", "id": 1, "size": 1}}}}}
+        fs.inp += b'\x00\x00\x00\x00'
+        #FIXME
 
     def test_attribute_write(self):
+        #FIXME
         pass
 
     def test_attribute_forbidden_write(self):
+        #FIXME
         pass
 
     def test_function_invocation(self):
+        #FIXME
         pass
 
 class FakeSerial:
