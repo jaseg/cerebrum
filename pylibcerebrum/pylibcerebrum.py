@@ -118,28 +118,28 @@ class Ganglion:
         #Is the crc necessary here?
         self._ser.write(b'\\#\x00\x00\x00\x00')
         (clen,) = struct.unpack(">H", self._my_ser_read(2))
-        print(clen)
+        #print(clen)
         cbytes = self._my_ser_read(clen)
         self._my_ser_read(2) #read and ignore the not-yet-crc
         #return json.JSONDecoder().decode(str(lzma.decompress(cbytes), "ASCII"))
-        print(cbytes)
+        #print(cbytes)
         return json.JSONDecoder().decode(str(cbytes, "ASCII"))
 
     def _callfunc(self, fid, argsfmt, args, retfmt):
         """Call a function on the device by id, directly passing argument/return format parameters."""
         cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args) + (b'\x00\x00' if struct.calcsize(argsfmt) > 0 else b'')
         self._ser.write(cmd)
-        print('cmd', cmd)
-        print('sent ', len(cmd))
+        #print('cmd', cmd)
+        #print('sent ', len(cmd))
         #payload length
         (clen,) = struct.unpack(">H", self._my_ser_read(2))
-        print('clen ', clen)
+        #print('clen ', clen)
         #payload data
         cbytes = self._my_ser_read(clen)
-        print('cbytes ', cbytes)
+        #print('cbytes ', cbytes)
         #crc
         self._my_ser_read(2) #read and ignore the not-yet-crc
-        print('recv crc')
+        #print('recv crc')
         if clen is not struct.calcsize(retfmt):
             #CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
             #FIXME raise an error here or let the whole operation just fail in the following struct.unpack?
