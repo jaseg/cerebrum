@@ -1,0 +1,191 @@
+/*
+ Copyright (C) 2012 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <avr/pgmspace.h>
+
+#include "spi.h"
+
+${modulevar("buffer", "uint8_t", "{}B".format(member["length"]*3), array=member["length"]*3)};
+//   B     G     R
+#define NR_OF_PATTERNS 7
+
+const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
+
+% for i in range(member["length"]):
+    0x00, 0x00, 0x00,
+% endfor
+
+// TEMPLATE CODE //////////////////////////////////////
+
+% for i in range(member["length"]):
+<% foo=int(i*6/member["length"]) %>
+<% r=i-foo*member["length"]/6 %>
+% if foo == 0:
+	0xFF,
+	${r*6/member["length"]}*255,
+	0x00,
+% endif
+% if foo == 1:
+	${1-r*6/member["length"]}*255,
+	0xFF,
+	0x00,
+% endif
+% if foo == 2:
+	0x00,
+	0xFF,
+	${r*6/member["length"]}*255,
+% endif
+% if foo == 3:
+	0x00,
+	${1-r*6/member["length"]}*255,
+	0xFF,
+% endif
+% if foo == 4:
+	${r*6/member["length"]}*255,
+	0x00,
+	0xFF,
+% endif
+% if foo == 5:
+	0xFF,
+	0x00,
+	${1-r*6/member["length"]}*255,
+% endif
+% endfor
+
+
+// TEMPLATE CODE //////////////////////////////////////
+// gruene wuerstchen
+
+% for i in range(member["length"]):
+% if i % 64 < 32:
+    0x00, 0xFF, 0x00,
+% else:
+    0x00, 0x00, 0x00,
+% endif
+% endfor
+
+
+// TEMPLATE CODE //////////////////////////////////////
+
+// blaue/gruene wuerstchen
+% for i in range(member["length"]):
+% if (i+1) % 64 < 32:
+    0x00, 0xFF, 0x00,
+% else:
+    0xFF, 0x00, 0x00,
+% endif
+% endfor
+
+
+// TEMPLATE CODE //////////////////////////////////////
+
+// rote lange wuerstchen
+% for i in range(member["length"]):
+% if i % 128 < 64:
+    0x00, 0x00, 0xFF,
+% else:
+    0x00, 0x00, 0x00,
+% endif
+% endfor
+
+
+// TEMPLATE CODE //////////////////////////////////////
+
+% for i in range(member["length"]):
+<% foo=int(i*6/member["length"]) %>
+<% r=i-foo*member["length"]/6 %>
+% if foo == 0:
+    0xFF,
+    ${r*6/member["length"]}*255,
+    0x00,
+% endif
+% if foo == 1:
+    ${1-r*6/member["length"]}*255,
+    0xFF,
+    0x00,
+% endif
+% if foo == 2:
+    0x00,
+    0xFF,
+    ${r*6/member["length"]}*255,
+% endif
+% if foo == 3:
+    0x00,
+    ${1-r*6/member["length"]}*255,
+    0xFF,
+% endif
+% if foo == 4:
+    ${r*6/member["length"]}*255,
+    0x00,
+    0xFF,
+% endif
+% if foo == 5:
+    0xFF,
+    0x00,
+    ${1-r*6/member["length"]}*255,
+% endif
+% endfor
+
+// TEMPLATE CODE //////////////////////////////////////
+
+% for i in range(member["length"]):
+% if i < 16:
+	0xFF, 0xFF, 0xFF,
+% else:
+    0x00, 0x00, 0x00,
+% endif
+% endfor
+};
+
+
+//${modulevar("pattern", None, "B")}
+void callback_set_${modulevar("pattern")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+    if (args[0] < NR_OF_PATTERNS) {
+        //memcpy(${modulevar("buffer")}, patterns[args[0]], ${member["length"]*3});
+        memcpy_PF(${modulevar("buffer")}, patterns+(${member["length"]*3}*args[0]), ${member["length"]*3});
+    }
+    uart_putc(0x00);
+    uart_putc(0x00);
+    uart_putc(0x00);
+    uart_putc(0x00);
+}
+
+void callback_get_${modulevar("pattern")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+    uart_putc(0x00);
+    uart_putc(0x00);
+    uart_putc(0x00);
+    uart_putc(0x00);
+}
+
+${modulevar("offset", "int16_t", "h")} = 0;
+${modulevar("speed", "int8_t", "b")} = 2;
+
+void ${loop_function()}(void){
+	//for(uint8_t* i=${modulevar("buffer")}; i<${modulevar("buffer")}+${member["length"]*3}; i++){
+	for(uint16_t i=0; i<${member["length"]}; i++){
+		uint16_t j=${modulevar("offset")}+i;
+		if(j>=${member["length"]})
+			j-=${member["length"]};
+		spi_transfer(${modulevar("buffer")}[j*3]);
+		spi_transfer(${modulevar("buffer")}[j*3+1]);
+		spi_transfer(${modulevar("buffer")}[j*3+2]);
+	}
+	${modulevar("offset")}+=${modulevar("speed")};
+	if(${modulevar("offset")}>=${member["length"]})
+		${modulevar("offset")}-=${member["length"]};
+    if(${modulevar("offset")}<0)
+        ${modulevar("offset")}+=${member["length"]};
+	_delay_us(1000);
+}
+
+void ${init_function()}(void){
+    uint8_t foo[] = {1};
+    callback_set_${modulevar("pattern")} (0,1,foo);
+}

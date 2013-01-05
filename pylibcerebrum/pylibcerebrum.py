@@ -118,9 +118,12 @@ class Ganglion:
         #Is the crc necessary here?
         self._ser.write(b'\\#\x00\x00\x00\x00')
         (clen,) = struct.unpack(">H", self._my_ser_read(2))
+        print(clen)
         cbytes = self._my_ser_read(clen)
         self._my_ser_read(2) #read and ignore the not-yet-crc
-        return json.JSONDecoder().decode(str(lzma.decompress(cbytes), "ASCII"))
+        #return json.JSONDecoder().decode(str(lzma.decompress(cbytes), "ASCII"))
+        print(cbytes)
+        return json.JSONDecoder().decode(str(cbytes, "ASCII"))
 
     def _callfunc(self, fid, argsfmt, args, retfmt):
         """Call a function on the device by id, directly passing argument/return format parameters."""

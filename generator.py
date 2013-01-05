@@ -49,13 +49,13 @@ autocode_footer = """
 #include <avr/pgmspace.h>
 #endif
 
-comm_callback comm_callbacks[] = {
+const comm_callback comm_callbacks[] = {
     % for (callback, id) in callbacks:
     &${callback}, //${id}
     % endfor
 };
 
-const uint16_t num_callbacks = ${len(callbacks)};
+const uint16_t callback_count = (sizeof(comm_callbacks)/sizeof(comm_callback)); //${len(callbacks)};
 
 void init_auto(){
     % for initfunc in init_functions:
@@ -275,7 +275,8 @@ def generate(desc, device, build_path, builddate, target = 'all'):
     with open(os.path.join(build_path, 'autocode.c'), 'w') as f:
         f.write(autocode)
     #compress the build config and write it out
-    config = lzma.compress(bytes(json.JSONEncoder(separators=(',',':')).encode(desc), 'ASCII'))
+    #config = lzma.compress(bytes(json.JSONEncoder(separators=(',',':')).encode(desc), 'ASCII'))
+    config = bytes(json.JSONEncoder(separators=(',',':')).encode(desc), 'ASCII')
     with open(os.path.join(build_path, 'config.c'), 'w') as f:
         f.write(Template(config_c_template).render_unicode(desc_len=len(config), desc=','.join(map(str, config))))
     #compile the whole stuff

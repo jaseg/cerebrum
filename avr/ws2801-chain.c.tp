@@ -13,48 +13,53 @@
 ${modulevar("buffer", "uint8_t", "{}B".format(member["length"]*3), array=member["length"]*3)} = {
 //   B     G     R
 % for i in range(member["length"]-1):
-<% foo=int(i*6/member["length"]) %>
-<% r=i-foo*member["length"]/6 %>
-% if foo == 0:
-	0xFF,
-	${r*6/member["length"]}*255,
-	0x00,
-% endif
-% if foo == 1:
-	${1-r*6/member["length"]}*255,
-	0xFF,
-	0x00,
-% endif
-% if foo == 2:
-	0x00,
-	0xFF,
-	${r*6/member["length"]}*255,
-% endif
-% if foo == 3:
-	0x00,
-	${1-r*6/member["length"]}*255,
-	0xFF,
-% endif
-% if foo == 4:
-	${r*6/member["length"]}*255,
-	0x00,
-	0xFF,
-% endif
-% if foo == 5:
-	0xFF,
-	0x00,
-	${1-r*6/member["length"]}*255,
-% endif
+//<% foo=int(i*6/member["length"]) %>
+//<% r=i-foo*member["length"]/6 %>
+//% if foo == 0:
+//	0xFF,
+//	${r*6/member["length"]}*255,
+//	0x00,
+//% endif
+//% if foo == 1:
+//	${1-r*6/member["length"]}*255,
+//	0xFF,
+//	0x00,
+//% endif
+//% if foo == 2:
+//	0x00,
+//	0xFF,
+//	${r*6/member["length"]}*255,
+//% endif
+//% if foo == 3:
+//	0x00,
+//	${1-r*6/member["length"]}*255,
+//	0xFF,
+//% endif
+//% if foo == 4:
+//	${r*6/member["length"]}*255,
+//	0x00,
+//	0xFF,
+//% endif
+//% if foo == 5:
+//	0xFF,
+//	0x00,
+//	${1-r*6/member["length"]}*255,
+//% endif
 
 	//${1-i/member["length"]}*255,
 	//0x00,
 	//${i/member["length"]}*255,
 
-% if i < 16:
-	//0xFF, 0xFF, 0x00,
+% if i % 64 < 32:
+    0x00, 0xFF, 0x00,
 % else:
-	//0xFF, 0x00, 0x00,
+    0x00, 0x00, 0x00,
 % endif
+//% if i < 16:
+//	0xFF, 0xFF, 0x00,
+//% else:
+//	0xFF, 0x00, 0x00,
+//% endif
 % endfor
 	0x00, 0x00, 0x00
 };
@@ -74,6 +79,6 @@ void ${loop_function()}(void){
 	${modulevar("offset")}+=3;
 	if(${modulevar("offset")}>=512)
 		${modulevar("offset")}=0;
-	_delay_ms(1);
+	_delay_us(1000);
 }
 

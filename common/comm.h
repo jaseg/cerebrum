@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-void comm_loop(void);
+int16_t comm_loop(void);
 void putc_escaped(char c);
 
 /*
@@ -16,7 +16,8 @@ void putc_escaped(char c);
  *    argbuf:        buffer containing the argument string
  */
 typedef void (*comm_callback)(uint16_t, uint16_t, uint8_t*);
-extern comm_callback comm_callbacks[];
+extern const comm_callback comm_callbacks[];
+extern const uint16_t callback_count;
 
 #ifndef ARGBUF_SIZE
 #define ARGBUF_SIZE 32

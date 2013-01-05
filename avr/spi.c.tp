@@ -11,7 +11,8 @@
 void ${init_function()} (void){
 	DDR${device["spi"]["port"]} |= (1<<${device["spi"]["mosi"]}) | (1<<${device["spi"]["sck"]}) | (1<<${device["spi"]["ss"]});
 	PORT${device["spi"]["port"]} &= ~(1<<${device["spi"]["mosi"]}) & ~(1<<${device["spi"]["sck"]});
-	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR0);
+	SPCR = (1<<SPE) | (1<<MSTR) | (1<<SPR1);
+    SPSR |= (1<<SPI2X);
 }
 
 uint8_t spi_transfer(uint8_t data){

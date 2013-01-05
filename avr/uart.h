@@ -55,6 +55,8 @@ LICENSE:
 #error "This library requires AVR-GCC 3.4 or later, update to newer AVR-GCC compiler !"
 #endif
 
+#include <avr/io.h>
+
 
 /*
 ** constants and macros

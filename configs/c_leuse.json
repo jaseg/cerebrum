@@ -7,7 +7,7 @@
 			"type": "spi"
 		},
 		"ws2801": {
-			"type": "ws2801-patterns",
+			"type": "ws2801-chain",
 			"length": 516
 		}
 	}

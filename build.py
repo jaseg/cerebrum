@@ -47,7 +47,7 @@ with open(os.path.join(os.path.dirname(__file__), "builds", builddate + "-" + ar
 # Flash the device if requested
 if args.port or args.usbserial:
 	print('Programming device')
-	generator.commit(device, args)
+	generator.commit(device, device['type'], args)
 
 # ???
 

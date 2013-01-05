@@ -39,20 +39,20 @@ int16_t comm_loop(){
                 comm_debug_print("[DEBUG] starting message\n");
                 pos = 0;
 				state = 0;
-                return;
+                return 0;
             }
             escape_state = 0;
         }else{
             if(c == '\\'){
                 escape_state = 1;
-                return;
+                return 0;
             }
         }
 		//escape sequence handling completed. 'c' now contains the next char of the payload.
 		if(state == 1){ //receive arg payload
             comm_debug_print("[DEBUG] receiving byte %d\n", pos);
 			argbuf[pos] = c;
-            uart_putc(pos);
+            //uart_putc(pos);
 			pos++;
 			if(pos == arglen || pos == ARGBUF_SIZE){
                 comm_debug_print("[DEBUG] recv buffer full\n");
@@ -77,8 +77,8 @@ int16_t comm_loop(){
 						break;
 					case 3:
 						arglen |= c;
-                        uart_putc(arglen>>8);
-                        uart_putc(arglen&0xFF);
+                        //uart_putc(arglen>>8);
+                        //uart_putc(arglen&0xFF);
 						pos = 0;
 						if(arglen == 0)
 							state = 2; //CAUTION this state is still handled in *this* iteration
@@ -102,7 +102,7 @@ int16_t comm_loop(){
 					//successfully received the crc
 					//FIXME add crc checking
 				}
-				if(funcid < (sizeof(comm_callbacks)/sizeof(comm_callback))){ //only jump to valid callbacks.
+				if(funcid < callback_count){ //only jump to valid callbacks.
                     comm_debug_print("[DEBUG] calling callback %d with offset %d and len %d\n", funcid, payload_offset, arglen);
 					comm_callbacks[funcid](payload_offset, arglen<ARGBUF_SIZE?arglen:ARGBUF_SIZE, argbuf);
 				}else{

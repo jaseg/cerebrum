@@ -11,10 +11,10 @@
 #include <avr/io.h>
 #endif
 
-#include "comm.h"
-#include "autocode.h"
-#include "config.h"
-#include "uart.h"
+#include <comm.h>
+#include <autocode.h>
+#include <config.h>
+#include <uart.h>
 
 void init(void);
 void loop(void);
