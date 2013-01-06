@@ -5,7 +5,6 @@
 #define debug_print(...) fprintf(stderr, __VA_ARGS__)
 
 void ${module_callback("test_multipart", argformat="65B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    debug_print("Checking args...\n");
     for(unsigned int i=0; i<argsize; i++){
         if(args[i] != 'A'){
             debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 'A', got '%x'\n", payload_offset, i, args[i]);
