@@ -1,5 +1,4 @@
- * merge back changes on avr/generate.py to msp/generate.py
- * share code between avr and msp
  * add timeouts in the device-side serial protocol parser
  * convert protocol to little endian
- * remove empty members in build configs?
+ * remove not-yet crc stuff
+ * the unit testing code is pretty redundant

@@ -2,12 +2,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#define debug_print(...) fprintf(stderr, __VA_ARGS__)
+#define debug_print(...) //fprintf(stderr, __VA_ARGS__)
 
 void ${module_callback("test_multipart", argformat="65B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
     for(unsigned int i=0; i<argsize; i++){
         if(args[i] != 'A'){
-            debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 'A', got '%x'\n", payload_offset, i, args[i]);
+            debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 0x41, got 0x%x\n", payload_offset, i, args[i]);
             exit(1);
         }
     }
@@ -30,3 +30,16 @@ void ${module_callback("test_multipart", argformat="65B")} (uint16_t payload_off
             exit(1);
     }
 }
+
+${modulevar("test_buffer", "uint8_t", "65B", array=65)};
+
+void ${module_callback("check_test_buffer")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+    for(unsigned int i=0; i<65; i++){
+        uint8_t expected = 'A' + (i/32);
+        if(${modulevar("test_buffer")}[i] != expected){
+            debug_print("Wrong byte in the test buffer at position %d. Expected 0x%x, got 0x%x\n", i, expected, ${modulevar("test_buffer")}[i]);
+            exit(1);
+        }
+    }
+}
+

@@ -14,10 +14,11 @@
 #ifdef __TEST__
 #include <stdio.h>
 #define comm_debug_print(...) //fprintf(stderr, __VA_ARGS__)
-#define comm_debug_print2(...) fprintf(stderr, __VA_ARGS__)
+#define comm_debug_print2(...) //fprintf(stderr, __VA_ARGS__)
 
 #else
 #define comm_debug_print(...)
+#define comm_debug_print2(...)
 #endif//TEST
 
 int16_t comm_loop(){
