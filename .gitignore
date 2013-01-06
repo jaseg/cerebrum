@@ -11,10 +11,11 @@
 *.elf
 *.map
 *.sym
-RF24
-tmp
+test/main
 autocode.c
 config.c
 msp/main
 builds
+lib
+.zsh
 */__pycache__

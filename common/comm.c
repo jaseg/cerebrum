@@ -11,9 +11,10 @@
 #include "comm.h"
 #include "uart.h"
 
-#ifdef TEST
+#ifdef __TEST__
 #include <stdio.h>
-#define comm_debug_print printf
+#define comm_debug_print(...) //fprintf(stderr, __VA_ARGS__)
+#define comm_debug_print2(...) fprintf(stderr, __VA_ARGS__)
 
 #else
 #define comm_debug_print(...)
@@ -103,8 +104,10 @@ int16_t comm_loop(){
 					//FIXME add crc checking
 				}
 				if(funcid < callback_count){ //only jump to valid callbacks.
-                    comm_debug_print("[DEBUG] calling callback %d with offset %d and len %d\n", funcid, payload_offset, arglen);
+                    comm_debug_print2("[DEBUG] calling callback %d with offset %d and len %d\n", funcid, payload_offset, arglen);
+#ifndef TEST
 					comm_callbacks[funcid](payload_offset, arglen<ARGBUF_SIZE?arglen:ARGBUF_SIZE, argbuf);
+#endif//TEST
 				}else{
 					//FIXME error handling
 				}

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-import avr.generate
+import generator
 import pylibcerebrum.test
 import unittest
 
-suite = unittest.TestLoader().loadTestsFromModule(avr.generate)
-suite.addTest(unittest.TestLoader().loadTestsFromModule(pylibcerebrum.test))
+suite = unittest.TestLoader().loadTestsFromModule(generator)
+#suite.addTest(unittest.TestLoader().loadTestsFromModule(pylibcerebrum.test))
 unittest.TextTestRunner(verbosity=2).run(suite)
 

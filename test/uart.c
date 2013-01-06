@@ -9,16 +9,17 @@
 #include "uart.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
-void uart_init(unsigned int baudrate){
+void uart_init(){
     //WELCOME YOU WILL EXPERIENCE A TINGLING SENSATION AN THEN DEATH REMAIN CALM WHILE YOUR LIFE IS EXTRACTED
 }
 
-void uart_putc(unsigned char c){
-    printf("[DEBUG] sending: %c\n", c);
+void uart_putc(uint8_t c){
+    printf("%c", c);
 }
 
-int16_t uart_getc(){
+uint16_t uart_getc(){
     return getchar();
 }
 

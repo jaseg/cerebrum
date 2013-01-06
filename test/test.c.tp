@@ -1,0 +1,33 @@
+
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
+#define debug_print(...) fprintf(stderr, __VA_ARGS__)
+
+void ${module_callback("test_multipart", argformat="65B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+    debug_print("Checking args...\n");
+    for(unsigned int i=0; i<argsize; i++){
+        if(args[i] != 'A'){
+            debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 'A', got '%x'\n", payload_offset, i, args[i]);
+            exit(1);
+        }
+    }
+    switch(payload_offset){
+        case 0:
+        case 32:
+            if(argsize != ARGBUF_SIZE){
+                debug_print("Wrong argument size for payload offset %d. Expected %d, got %d\n", payload_offset, ARGBUF_SIZE, argsize);
+                exit(1);
+            }
+            break;
+        case 64:
+            if(argsize != 1){
+                debug_print("Wrong argument size for payload offset 64. Expected %d, got %d\n", ARGBUF_SIZE, argsize);
+                exit(1);
+            }
+            break;
+        default:
+            debug_print("Wrong payload_offset: %d\n", payload_offset);
+            exit(1);
+    }
+}

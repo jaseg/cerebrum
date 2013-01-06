@@ -23,7 +23,7 @@ int main(void){
     init();
 #ifdef __TEST__
     //debug stuff
-    while(!loop());
+    while(!comm_loop());
 #else
     for(;;) loop();
 #endif
