@@ -1,7 +1,7 @@
 
- '\\' characters anywhere are escaped as "\\\\"
-
  "\\#" [2 bytes id] [2 bytes length] [n bytes args] [2 byte crc] [dev:2 bytes length] [dev:n byte payload] [dev:2 byte crc] call function
+
+If the host sends 0 bytes of arguments, the host-side crs may be omitted.
 
 special functions:
 0x00: get device descriptor

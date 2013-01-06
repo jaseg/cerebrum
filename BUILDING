@@ -1,4 +1,4 @@
 To build and flash the firmware for c-base's airlock on an Arduino Mega at /dev/ttyUSB0 type:
 ```
-$ ./generatefw.py -p /dev/ttyUSB0 configs/schleuse.json devices/arduino-mega.json
+$ ./build.py -p /dev/ttyUSB0 configs/schleuse.json devices/arduino-mega.json
 ```
