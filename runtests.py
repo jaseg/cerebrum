@@ -4,7 +4,7 @@ import generator
 import pylibcerebrum.test
 import unittest
 
-suite = unittest.TestLoader().loadTestsFromModule(generator)
-#suite.addTest(unittest.TestLoader().loadTestsFromModule(pylibcerebrum.test))
+#The generator will be tested as a part of pylibcerebrum due to the inheritance of the test classes.
+suite = unittest.TestLoader().loadTestsFromModule(pylibcerebrum.test)
 unittest.TextTestRunner(verbosity=2).run(suite)
 
