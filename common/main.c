@@ -23,9 +23,12 @@ int main(void){
     init();
 #ifdef __TEST__
     //debug stuff
-    while(!comm_loop());
+    int16_t v;
+    while((v = getchar()) > 0){
+        comm_handle(v);
+    }
 #else
-    for(;;) loop();
+    for(;;) auto_loop();
 #endif
 }
 
@@ -45,7 +48,7 @@ void init(){
     P1SEL  |= 0x03;
     P1SEL2 |= 0x03;
 #elif defined(__AVR__)//__MSPGCC__
-    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
+    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(9600, F_CPU));
 #endif//AVR
 
 	init_auto();
@@ -58,7 +61,3 @@ void init(){
 #endif//__MSPGCC__
 }
 
-void loop(){
-	comm_loop();
-	loop_auto();
-}

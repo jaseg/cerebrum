@@ -93,7 +93,9 @@ accessor_callbacks = """
 void callback_set_${name}(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf){
     //FIXME add some error handling here or there?
     memcpy(((uint8_t*)&${name})+payload_offset, argbuf, alen);
+    //fprintf(stderr, "Copying a chunk of %d bytes to index %d\\n", alen, payload_offset);
     if(payload_offset+alen >= ${bsize}){ //end of buffer reached
+        //fprintf(stderr, "Sending response\\n");
         ${set_action}
         //response length
         uart_putc(0x00);
@@ -343,9 +345,8 @@ class TestCommStuff(unittest.TestCase):
         stdin.close()
 
         (length,) = struct.unpack('>H', stdout.read(2))
-        self.assertEqual(length, 315, 'Incorrect config descriptor length')
+        self.assertEqual(length, 317, 'Incorrect config descriptor length')
         data = stdout.read(length)
-        stdout.read(2) #read and ignore the not-yet-crc
         #self.assertEqual(data, b']\x00\x00\x80\x00\x00=\x88\x8a\xc6\x94S\x90\x86\xa6c}%:\xbbAj\x14L\xd9\x1a\xae\x93n\r\x10\x83E1\xba]j\xdeG\xb1\xba\xa6[:\xa2\xb9\x8eR~#\xb9\x84%\xa0#q\x87\x17[\xd6\xcdA)J{\xab*\xf7\x96%\xff\xfa\x12g\x00', 'wrong config descriptor returned')
         #Somehow, each time this is compiled, the json encode shuffles the fields of the object in another way. Thus it does not suffice to compare the plain strings.
         #self.assert_(compareJSON(data, b'{"version":0.17,"builddate":"2012-05-23 23:42:17","members":{"test":{"functions":{"test_multipart":{"args":"65B","id":1},"check_test_buffer":{"id":4}},"type":"test","properties":{"test_buffer":{"size":65,"id":2,"fmt":"65B"}}}}}'), "The generated test program returns a wrong config descriptor: {}.".format(data))
@@ -354,7 +355,7 @@ class TestCommStuff(unittest.TestCase):
     def test_multipart_call(self):
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x00\x00')
+        stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
         stdin.flush()
         stdin.close()
         
@@ -366,7 +367,7 @@ class TestCommStuff(unittest.TestCase):
         """Test whether the test function actually fails when given invalid data."""
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA\x00\x00')
+        stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA')
         stdin.flush()
         stdin.close()
         
@@ -377,7 +378,7 @@ class TestCommStuff(unittest.TestCase):
     def test_multipart_call_long_args(self):
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*257+b'\x00\x00')
+        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*257)
         stdin.write(b'\\#\x00\x06\x00\x00')
         stdin.flush()
         stdin.close()
@@ -385,12 +386,13 @@ class TestCommStuff(unittest.TestCase):
         #wait for test process to terminate. If everything else fails, the timeout thread will kill it.
         p.wait()
         self.assertEqual(p.returncode, 0, "The test process caught an error from the c code. Please watch stderr for details.")
+        self.assertEqual(p.returncode, 0, "The test process caught an error from the c code. Please watch stderr for details.")
         
     def test_meta_multipart_call_long_args(self):
         """Test whether the test function actually fails when given invalid data."""
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128+b'\x00\x00')
+        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128)
         stdin.flush()
         stdin.close()
         
@@ -400,7 +402,7 @@ class TestCommStuff(unittest.TestCase):
 
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*32+b'\x00\x00')
+        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*32)
         stdin.write(b'\\#\x00\x06\x00\x00')
         stdin.flush()
         stdin.close()
@@ -412,7 +414,7 @@ class TestCommStuff(unittest.TestCase):
     def test_attribute_accessors_multipart(self):
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x03\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBC\x00\x00') # write some characters to test_buffer
+        stdin.write(b'\\#\x00\x03\x01\x01'+b'A'*32+b'B'*32+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
         stdin.write(b'\\#\x00\x04\x00\x00') # call check_test_buffer
         stdin.flush()
         stdin.close()
@@ -424,7 +426,7 @@ class TestCommStuff(unittest.TestCase):
     def test_meta_attribute_accessors_multipart(self):
         (p, stdin, stdout, t) = self.new_test_process();
 
-        stdin.write(b'\\#\x00\x03\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBC\x00\x00') # write some characters to test_buffer
+        stdin.write(b'\\#\x00\x03\x01\x01'+b'A'*33+b'B'*31+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
         stdin.write(b'\\#\x00\x04\x00\x00') # call check_test_buffer
         stdin.flush()
         stdin.close()

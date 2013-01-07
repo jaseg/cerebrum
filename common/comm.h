@@ -4,8 +4,7 @@
 
 #include <stdint.h>
 
-int16_t comm_loop(void);
-void putc_escaped(char c);
+void comm_handle(uint8_t c);
 
 /*
  *comm callback function pointer type.
