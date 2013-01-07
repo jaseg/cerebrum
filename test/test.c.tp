@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#define debug_print(...) //fprintf(stderr, __VA_ARGS__)
+#define debug_print(...) fprintf(stderr, __VA_ARGS__)
 
 void ${module_callback("test_multipart", argformat="65B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
     for(unsigned int i=0; i<argsize; i++){
@@ -40,6 +40,46 @@ void ${module_callback("check_test_buffer")} (uint16_t payload_offset, uint16_t 
             debug_print("Wrong byte in the test buffer at position %d. Expected 0x%x, got 0x%x\n", i, expected, ${modulevar("test_buffer")}[i]);
             exit(1);
         }
+    }
+}
+
+int test_pos = 0;
+
+void ${module_callback("test_call_long_args", argformat="257B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+    debug_print("called with test_pos %d\n", test_pos);
+    for(unsigned int i=0; i<argsize; i++){
+        if(args[i] != 'A'){
+            debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 0x41, got 0x%x\n", payload_offset, i, args[i]);
+            exit(1);
+        }
+    }
+    int expected_size = (257-payload_offset);
+    if(expected_size > ARGBUF_SIZE){
+        expected_size = ARGBUF_SIZE;
+    }
+    if(argsize != expected_size){
+        debug_print("Wrong argument size for payload offset %d. Expected %d, got %d\n", payload_offset, expected_size, argsize);
+        exit(1);
+    }
+    if(payload_offset != test_pos){
+        debug_print("Wrong payload_offset: expected %d, got %d\n", test_pos, payload_offset);
+        exit(1);
+    }
+    test_pos += argsize;
+}
+
+void ${module_callback("test_call_long_args_final_check")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+    if(payload_offset != 0){
+        debug_print("Wrong payload offset for debug call test_call_long_args_final_check: %d\n", payload_offset);
+        exit(1);
+    }
+    if(argsize != 0){
+        debug_print("Wrong argsize for debug call test_call_long_args_final_check: %d\n", argsize);
+        exit(1);
+    }
+    if(test_pos != 257){
+        debug_print("Somehow a callback with a long argument buffer did not finish. Last offset called: %d\n", test_pos);
+        exit(1);
     }
 }
 

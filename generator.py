@@ -343,7 +343,7 @@ class TestCommStuff(unittest.TestCase):
         stdin.close()
 
         (length,) = struct.unpack('>H', stdout.read(2))
-        self.assertEqual(length, 227, 'Incorrect config descriptor length')
+        self.assertEqual(length, 315, 'Incorrect config descriptor length')
         data = stdout.read(length)
         stdout.read(2) #read and ignore the not-yet-crc
         #self.assertEqual(data, b']\x00\x00\x80\x00\x00=\x88\x8a\xc6\x94S\x90\x86\xa6c}%:\xbbAj\x14L\xd9\x1a\xae\x93n\r\x10\x83E1\xba]j\xdeG\xb1\xba\xa6[:\xa2\xb9\x8eR~#\xb9\x84%\xa0#q\x87\x17[\xd6\xcdA)J{\xab*\xf7\x96%\xff\xfa\x12g\x00', 'wrong config descriptor returned')
@@ -374,6 +374,41 @@ class TestCommStuff(unittest.TestCase):
         p.wait()
         self.assertEqual(p.returncode, 1, "The test process did not catch an error it was supposed to catch from the c code. Please watch stderr for details.")
     
+    def test_multipart_call_long_args(self):
+        (p, stdin, stdout, t) = self.new_test_process();
+
+        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*257+b'\x00\x00')
+        stdin.write(b'\\#\x00\x06\x00\x00')
+        stdin.flush()
+        stdin.close()
+        
+        #wait for test process to terminate. If everything else fails, the timeout thread will kill it.
+        p.wait()
+        self.assertEqual(p.returncode, 0, "The test process caught an error from the c code. Please watch stderr for details.")
+        
+    def test_meta_multipart_call_long_args(self):
+        """Test whether the test function actually fails when given invalid data."""
+        (p, stdin, stdout, t) = self.new_test_process();
+
+        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128+b'\x00\x00')
+        stdin.flush()
+        stdin.close()
+        
+        #wait for test process to terminate. If everything else fails, the timeout thread will kill it.
+        p.wait()
+        self.assertEqual(p.returncode, 1, "The test process did not catch an error it was supposed to catch from the c code. Please watch stderr for details.")
+
+        (p, stdin, stdout, t) = self.new_test_process();
+
+        stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*32+b'\x00\x00')
+        stdin.write(b'\\#\x00\x06\x00\x00')
+        stdin.flush()
+        stdin.close()
+        
+        #wait for test process to terminate. If everything else fails, the timeout thread will kill it.
+        p.wait()
+        self.assertEqual(p.returncode, 1, "The test process did not catch an error it was supposed to catch from the c code. Please watch stderr for details.")
+
     def test_attribute_accessors_multipart(self):
         (p, stdin, stdout, t) = self.new_test_process();
 

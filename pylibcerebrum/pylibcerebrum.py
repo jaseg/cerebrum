@@ -140,7 +140,7 @@ class Ganglion:
         #crc
         self._my_ser_read(2) #read and ignore the not-yet-crc
         #print('recv crc')
-        if clen is not struct.calcsize(retfmt):
+        if clen != struct.calcsize(retfmt):
             #CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
             #FIXME raise an error here or let the whole operation just fail in the following struct.unpack?
             raise AttributeError("Device response format problem: Length mismatch: {} != {}".format(clen, struct.calcsize(retfmt)))

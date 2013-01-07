@@ -14,7 +14,7 @@
 #ifdef __TEST__
 #include <stdio.h>
 #define comm_debug_print(...) //fprintf(stderr, __VA_ARGS__)
-#define comm_debug_print2(...) //fprintf(stderr, __VA_ARGS__)
+#define comm_debug_print2(...) fprintf(stderr, __VA_ARGS__)
 
 #else
 #define comm_debug_print(...)
@@ -82,6 +82,7 @@ int16_t comm_loop(){
                         //uart_putc(arglen>>8);
                         //uart_putc(arglen&0xFF);
 						pos = 0;
+                        payload_offset = 0;
 						if(arglen == 0)
 							state = 2; //CAUTION this state is still handled in *this* iteration
 						else
