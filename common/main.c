@@ -15,6 +15,9 @@
 #include <autocode.h>
 #include <config.h>
 #include <uart.h>
+#ifdef __TEST__
+#include "comm_handle.h"
+#endif
 
 void init(void);
 void loop(void);
@@ -24,7 +27,7 @@ int main(void){
 #ifdef __TEST__
     //debug stuff
     int16_t v;
-    while((v = getchar()) > 0){
+    while((v = getchar()) >= 0){
         comm_handle(v);
     }
 #else

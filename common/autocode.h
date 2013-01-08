@@ -8,8 +8,10 @@
 
 #include <stdint.h>
 
+#include "comm.h"
+
 void init_auto(void);
 void loop_auto(void);
-void callback_get_descriptor_auto(uint16_t payload_offset, uint16_t alen, uint8_t* argbuf);
+void callback_get_descriptor_auto(const comm_callback_descriptor* cb, void* argbuf_end);
 
 #endif//_AUTOCODE_H_

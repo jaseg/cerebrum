@@ -10,8 +10,8 @@ class TestGanglion(generator.TestCommStuff):
 
     def test_connect(self):
         fs = FakeSerial()
-        #fs.inp += b'\x00K]\x00\x00\x80\x00\x00=\x88\x8a\xc6\x94S\x90\x86\xa6c}%:\xbbAj\x14L\xd9\x1a\xae\x93n\r\x10\x83E1\xba]j\xdeG\xb1\xba\xa6[:\xa2\xb9\x8eR~#\xb9\x84%\xa0#q\x87\x17[\xd6\xcdA)J{\xab*\xf7\x96%\xff\xfa\x12g\x00\x00\x00'
-        fs.inp += b'\x00\x3F{"version":0.17,"builddate":"2012-05-23 23:42:17","members":{}}\x00\x00'
+        #fs.inp += b'\x00K]\x00\x00\x80\x00\x00=\x88\x8a\xc6\x94S\x90\x86\xa6c}%:\xbbAj\x14L\xd9\x1a\xae\x93n\r\x10\x83E1\xba]j\xdeG\xb1\xba\xa6[:\xa2\xb9\x8eR~#\xb9\x84%\xa0#q\x87\x17[\xd6\xcdA)J{\xab*\xf7\x96%\xff\xfa\x12g\x00'
+        fs.inp += b'\x00\x3F{"version":0.17,"builddate":"2012-05-23 23:42:17","members":{}}'
 
         g = Ganglion(ser=fs)
         g.config = g._read_config()
@@ -36,10 +36,10 @@ class TestGanglion(generator.TestCommStuff):
         g = Ganglion(ser=fs)
         g._config = {'version': 0.17, 'builddate': '2012-05-23 23:42:17', 'members': {"foo": {"type": "test", "functions": {"callback": {"id": 1, "args": "3B", "returns": "3B"}}}}}
         #put the device's response into the input of the ganglion
-        fs.inp += b'\x00\x03ABC\x00\x00'
+        fs.inp += b'\x00\x03ABC'
         #access the attribute
         foo = g.foo.callback(0x44, 0x45, 0x46)
-        self.assertEqual(fs.out, b'\\#\x00\x01\x00\x03DEF\x00\x00', 'Somehow pylibcerebrum sent a wrong command to the device.')
+        self.assertEqual(fs.out, b'\\#\x00\x01\x00\x03DEF', 'Somehow pylibcerebrum sent a wrong command to the device.')
         self.assertEqual(foo, (0x41, 0x42, 0x43), 'Somehow a device response was decoded wrong.')
 
     def test_attribute_read(self):
@@ -47,7 +47,7 @@ class TestGanglion(generator.TestCommStuff):
         g = Ganglion(ser=fs)
         g._config = {'version': 0.17, 'builddate': '2012-05-23 23:42:17', 'members': {"foo": {"type": "test", "properties": {"prop": {"fmt": "B", "id": 1, "size": 1}}}}}
         #put the device's response into the input of the ganglion
-        fs.inp += b'\x00\x01\x41\x00\x00'
+        fs.inp += b'\x00\x01\x41'
         #access the attribute
         (foo,) = g.foo.prop
         self.assertEqual(fs.out, b'\\#\x00\x01\x00\x00', 'Somehow pylibcerebrum sent a wrong command to the device.')
@@ -59,7 +59,7 @@ class TestGanglion(generator.TestCommStuff):
         g = Ganglion(ser=fs)
         g._config = {'version': 0.17, 'builddate': '2012-05-23 23:42:17', 'members': {"foo": {"type": "test", "properties": {"prop": {"fmt": "65B", "id": 1, "size": 65}}}}}
         #put the device's response into the input of the ganglion
-        fs.inp += b'\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x00\x00'
+        fs.inp += b'\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
         #access the attribute
         foo = g.foo.prop
         self.assertEqual(fs.out, b'\\#\x00\x01\x00\x00', 'Somehow pylibcerebrum sent a wrong command to the device.')
@@ -70,10 +70,10 @@ class TestGanglion(generator.TestCommStuff):
         g = Ganglion(ser=fs)
         g._config = {'version': 0.17, 'builddate': '2012-05-23 23:42:17', 'members': {"foo": {"type": "test", "properties": {"prop": {"fmt": "B", "id": 1, "size": 1}}}}}
         #put the device's response into the input of the ganglion
-        fs.inp += b'\x00\x00\x00\x00'
+        fs.inp += b'\x00\x00'
         #access the attribute
         g.foo.prop = 0x41
-        self.assertEqual(fs.out, b'\\#\x00\x02\x00\x01\x41\x00\x00', 'Somehow pylibcerebrum sent a wrong command to the device.')
+        self.assertEqual(fs.out, b'\\#\x00\x02\x00\x01\x41', 'Somehow pylibcerebrum sent a wrong command to the device.')
 
     def test_attribute_write_long(self):
         #This writes a rather large attribute (>64 bytes) in order to catch problems with multipart callbacks.
@@ -81,10 +81,10 @@ class TestGanglion(generator.TestCommStuff):
         g = Ganglion(ser=fs)
         g._config = {'version': 0.17, 'builddate': '2012-05-23 23:42:17', 'members': {"foo": {"type": "test", "properties": {"prop": {"fmt": "257B", "id": 1, "size": 0x101}}}}}
         #put the device's response into the input of the ganglion
-        fs.inp += b'\x00\x00\x00\x00'
+        fs.inp += b'\x00\x00'
         #access the attribute
         g.foo.prop = (0x41,)*0x101
-        self.assertEqual(fs.out, b'\\#\x00\x02\x01\x01'+b'A'*0x101+b'\x00\x00', 'Somehow pylibcerebrum sent a wrong command to the device.')
+        self.assertEqual(fs.out, b'\\#\x00\x02\x01\x01'+b'A'*0x101, 'Somehow pylibcerebrum sent a wrong command to the device.')
         pass
 
     def test_attribute_forbidden_write(self):

@@ -4,8 +4,6 @@
 
 #include <stdint.h>
 
-void comm_handle(uint8_t c);
-
 /*
  *comm callback function pointer type.
  *function signature:
@@ -14,12 +12,25 @@ void comm_handle(uint8_t c);
  *    arglen:        length of the argument string passed to the function
  *    argbuf:        buffer containing the argument string
  */
-typedef void (*comm_callback)(uint16_t, uint16_t, uint8_t*);
-extern const comm_callback comm_callbacks[];
+typedef struct comm_callback_descriptor comm_callback_descriptor;
+typedef void (*comm_callback)(const comm_callback_descriptor* cb, void* argbuf_end);
+struct comm_callback_descriptor {
+	comm_callback callback;
+	void* argbuf;
+	uint16_t argbuf_len;
+};
+extern const comm_callback_descriptor comm_callbacks[];
 extern const uint16_t callback_count;
 
+extern const uint8_t global_argbuf[];
+
 #ifndef ARGBUF_SIZE
+//needs to be at least 4 bytes to accomodate args_t in comm_handle(uint8_t)
+#ifndef __TEST__
 #define ARGBUF_SIZE 32
+#else
+#define ARGBUF_SIZE 257
+#endif
 #endif
 
 #endif//__COMM_H__
