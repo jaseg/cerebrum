@@ -145,6 +145,7 @@ extern unsigned int uart_getc(void);
  */
 extern void uart_putc(unsigned char data);
 
+extern void uart_putc_nonblocking(unsigned char data);
 
 /**
  *  @brief   Put string to ringbuffer for transmitting via UART
@@ -176,21 +177,6 @@ extern void uart_puts_p(const char *s );
  * @brief    Macro to automatically put a string constant into program memory
  */
 #define uart_puts_P(__s)       uart_puts_p(PSTR(__s))
-
-
-
-/** @brief  Initialize USART1 (only available on selected ATmegas) @see uart_init */
-extern void uart1_init(unsigned int baudrate);
-/** @brief  Get received byte of USART1 from ringbuffer. (only available on selected ATmega) @see uart_getc */
-extern unsigned int uart1_getc(void);
-/** @brief  Put byte to ringbuffer for transmitting via USART1 (only available on selected ATmega) @see uart_putc */
-extern void uart1_putc(unsigned char data);
-/** @brief  Put string to ringbuffer for transmitting via USART1 (only available on selected ATmega) @see uart_puts */
-extern void uart1_puts(const char *s );
-/** @brief  Put string from program memory to ringbuffer for transmitting via USART1 (only available on selected ATmega) @see uart_puts_p */
-extern void uart1_puts_p(const char *s );
-/** @brief  Macro to automatically put a string constant into program memory */
-#define uart1_puts_P(__s)       uart1_puts_p(PSTR(__s))
 
 /**@}*/
 

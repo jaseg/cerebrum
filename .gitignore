@@ -19,3 +19,4 @@ builds
 lib
 .zsh
 */__pycache__
+makefile

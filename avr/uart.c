@@ -204,14 +204,15 @@ static volatile unsigned char UART_TxTail;
 ISR(UART0_RECEIVE_INTERRUPT)
 {
     unsigned char data;
-    unsigned char usr;
-    unsigned char lastRxError;
+    //unsigned char usr;
+    //unsigned char lastRxError;
  
  
     /* read UART status register and UART data register */ 
-    usr  = UART0_STATUS;
+    //usr  = UART0_STATUS;
     data = UART0_DATA;
     
+    /*
 #if defined( AT90_UART )
     lastRxError = (usr & (_BV(FE)|_BV(DOR)) );
 #elif defined( ATMEGA_USART )
@@ -221,7 +222,9 @@ ISR(UART0_RECEIVE_INTERRUPT)
 #elif defined ( ATMEGA_UART )
     lastRxError = (usr & (_BV(FE)|_BV(DOR)) );
 #endif
+    */
         
+    //uart_putc(data);
     comm_handle(data);
 }
 
@@ -258,8 +261,6 @@ void uart_init(unsigned int baudrate)
 {
     UART_TxHead = 0;
     UART_TxTail = 0;
-    UART_RxHead = 0;
-    UART_RxTail = 0;
     
 #if defined( AT90_UART )
     /* set baud rate */
@@ -335,20 +336,31 @@ void uart_putc(unsigned char data)
 {
     unsigned char tmphead;
 
+    tmphead = (UART_TxHead + 1) & UART_TX_BUFFER_MASK;
     
-    tmphead  = (UART_TxHead + 1) & UART_TX_BUFFER_MASK;
-    
-    while ( tmphead == UART_TxTail ){
-        ;/* wait for free space in buffer */
-    }
+    while ( tmphead == UART_TxTail );/* wait for free space in buffer */
     
     UART_TxBuf[tmphead] = data;
     UART_TxHead = tmphead;
 
     /* enable UDRE interrupt */
     UART0_CONTROL    |= _BV(UART0_UDRIE);
+}
 
-}/* uart_putc */
+void uart_putc_nonblocking(unsigned char data){
+    unsigned char tmphead;
+    
+    tmphead  = (UART_TxHead + 1) & UART_TX_BUFFER_MASK;
+    
+    if(tmphead == UART_TxTail) //if there is no free space in buffer
+        return;
+    
+    UART_TxBuf[tmphead] = data;
+    UART_TxHead = tmphead;
+
+    //enable UDRE interrupt
+    UART0_CONTROL    |= _BV(UART0_UDRIE);
+}
 
 
 /*************************************************************************

@@ -1,13 +1,14 @@
 #ifndef COMM_HANDLE_H
 #define COMM_HANDLE_H
 
-#include <endian.h>
-
+#include "comm.h"
 #ifdef __TEST__
 #include <stdio.h>
+#include <endian.h> //FIXME detect endianness
 #define comm_debug_print(...) //fprintf(stderr, __VA_ARGS__)
 #define comm_debug_print2(...) //fprintf(stderr, __VA_ARGS__)
 #else//__TEST__
+#define htobe16(...) (__VA_ARGS__)
 #define comm_debug_print(...)
 #define comm_debug_print2(...)
 #endif//__TEST__
@@ -28,6 +29,10 @@ static inline void comm_handle(uint8_t c){
 	args_t* args = (args_t*)global_argbuf;
 #define ARGS_END (((uint8_t*)(args))+sizeof(args_t))
     //comm_debug_print("[DEBUG] received %c\n", c);
+    /*uart_putc_nonblocking('A');
+    uart_putc_nonblocking(c);
+    uart_putc_nonblocking(state.escaped);
+    uart_putc_nonblocking(state.receiving);*/
 	if(state.escaped){
         state.escaped = 0;
 		if(c == '#'){
@@ -62,7 +67,7 @@ static inline void comm_handle(uint8_t c){
             argbuf = comm_callbacks[htobe16(args->funcid)].argbuf;
             current_callback = comm_callbacks + htobe16(args->funcid);
             uint16_t len = current_callback->argbuf_len;
-            if(htobe16(args->arglen) < len){
+            if(htobe16(args->arglen) <= len){
                 len = htobe16(args->arglen);
             }
             argbuf_end = argbuf+len;
@@ -71,11 +76,16 @@ static inline void comm_handle(uint8_t c){
             }
 		}
         comm_debug_print2("[DEBUG] calling callback\n");
+        state.receiving = 0;
         if(current_callback->callback != 0){
+            sei();
             (*current_callback->callback)(current_callback, argbuf_end);
+        }else{
+            //Send a minimal response.
+            uart_putc_nonblocking(0);
+            uart_putc_nonblocking(0);
         }
         comm_debug_print("[DEBUG] going to idle state\n");
-        state.receiving = 0;
     }
 #undef ARGS_END
 }

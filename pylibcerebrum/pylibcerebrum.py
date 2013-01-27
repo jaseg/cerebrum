@@ -38,19 +38,23 @@ class Ganglion:
         self._config = None
         if ser is None:
             assert(config is None)
-            self._ser = serial.Serial(port=device, baudrate=baudrate, timeout=1)
+            s = serial.Serial(port=device, baudrate=baudrate, timeout=1)
             #Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
-            self._ser.setXonXoff(True)
-            self._ser.setXonXoff(False)
-            self._opened_ser = self._ser
+            s.setXonXoff(True)
+            s.setXonXoff(False)
+            s.setDTR(True)
+            s.setDTR(False)
+            self._opened_ser = self._ser = s
             i=0
             while True:
                 try:
                     self._config = self._read_config()
+                    time.sleep(0.1)
                     break
                 except TimeoutException as e:
                     print('Timeout', e)
-                    pass
+                except ValueError as e:
+                    print('That device threw some nasty ValueError\'ing JSON!', e)
                 i += 1
                 if i > 20:
                     raise serial.serialutil.SerialException('Could not connect, giving up after 20 tries')
@@ -125,16 +129,16 @@ class Ganglion:
 
     def _callfunc(self, fid, argsfmt, args, retfmt):
         """Call a function on the device by id, directly passing argument/return format parameters."""
-        cmd = b'\\#' + struct.pack(">HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args)
+        cmd = b'\\#' + struct.pack("<HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args)
         self._ser.write(cmd)
-        #print('cmd', cmd)
-        #print('sent ', len(cmd))
+        print('cmd', cmd)
+        print('sent ', len(cmd))
         #payload length
         (clen,) = struct.unpack(">H", self._my_ser_read(2))
-        #print('clen ', clen)
+        print('clen ', clen)
         #payload data
         cbytes = self._my_ser_read(clen)
-        #print('cbytes ', cbytes)
+        print('cbytes ', cbytes)
         if clen != struct.calcsize(retfmt):
             #print('cbytes', cbytes)
             #CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
