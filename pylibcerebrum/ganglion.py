@@ -123,9 +123,13 @@ class Ganglion:
         (clen,) = struct.unpack(">H", self._my_ser_read(2))
         #print(clen)
         cbytes = self._my_ser_read(clen)
-        #return json.JSONDecoder().decode(str(lzma.decompress(cbytes), "ASCII"))
-        #print(cbytes)
-        return json.JSONDecoder().decode(str(cbytes, "ASCII"))
+        #print(cbytes[0])
+        if cbytes[0] is ord('#'):
+            #print(lzma.decompress(cbytes[1:]))
+            return json.JSONDecoder().decode(str(lzma.decompress(cbytes[1:]), "utf-8"))
+        else:
+            #print(cbytes)
+            return json.JSONDecoder().decode(str(cbytes, "utf-8"))
 
     def _callfunc(self, fid, argsfmt, args, retfmt):
         """Call a function on the device by id, directly passing argument/return format parameters."""
