@@ -15,6 +15,7 @@ void ${init_function()} (void){
     SPSR |= (1<<SPI2X);
 }
 
+//this is blocking!
 uint8_t spi_transfer(uint8_t data){
 	SPDR = data;
 	while(!(SPSR & _BV(SPIF))){
