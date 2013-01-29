@@ -144,7 +144,13 @@ class Ganglion:
             #CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
             #FIXME raise an error here or let the whole operation just fail in the following struct.unpack?
             raise AttributeError("Device response format problem: Length mismatch: {} != {}".format(clen, struct.calcsize(retfmt)))
-        return struct.unpack(retfmt, cbytes)
+        rv = struct.unpack(retfmt, cbytes)
+        if len(rv) == 0:
+            return None
+        elif len(rv) == 1:
+            return rv[0]
+        else:
+            return rv
 
     def __dir__(self):
         """Get a list of all attributes of this object. This includes virtual Cerebrum stuff like members, properties and functions."""
