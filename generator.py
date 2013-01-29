@@ -94,7 +94,7 @@ void generic_getter_callback(const comm_callback_descriptor* cb, void* argbuf_en
     uart_putc(cb->argbuf_len>>8);
     uart_putc(cb->argbuf_len&0xFF);
     //response
-    for(char* i=((char*)cb->argbuf); i<((char*)&cb->argbuf)+cb->argbuf_len; i++){
+    for(char* i=((char*)cb->argbuf); i<((char*)cb->argbuf)+cb->argbuf_len; i++){
         uart_putc(*i);
     }
 }

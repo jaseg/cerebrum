@@ -131,14 +131,14 @@ class Ganglion:
         """Call a function on the device by id, directly passing argument/return format parameters."""
         cmd = b'\\#' + struct.pack("<HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args)
         self._ser.write(cmd)
-        print('cmd', cmd)
-        print('sent ', len(cmd))
+        #print('cmd', cmd)
+        #print('sent ', len(cmd))
         #payload length
         (clen,) = struct.unpack(">H", self._my_ser_read(2))
-        print('clen ', clen)
+        #print('clen ', clen)
         #payload data
         cbytes = self._my_ser_read(clen)
-        print('cbytes ', cbytes)
+        #print('cbytes ', cbytes)
         if clen != struct.calcsize(retfmt):
             #print('cbytes', cbytes)
             #CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
