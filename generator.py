@@ -250,6 +250,8 @@ def generate(desc, device, build_path, builddate, target = 'all'):
     with open(os.path.join(build_path, 'autocode.c'), 'w') as f:
         f.write(autocode)
     #compress the build config and write it out
+    #Depending on whether you want to store the device config as plain text or lzma'ed plain text comment out one of the following lines
+    #The first byte is used as a magic here. The first byte of a JSON string will always be a '{'
     config = b'#' + lzma.compress(bytes(json.JSONEncoder(separators=(',',':')).encode(desc), 'utf-8'))
     #config = bytes(json.JSONEncoder(separators=(',',':')).encode(desc), 'utf-8')
     with open(os.path.join(build_path, 'config.c'), 'w') as f:
