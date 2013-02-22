@@ -25,16 +25,12 @@ void callback_set_${modulevar("state")} (uint16_t payload_offset, uint16_t argsi
 		PORT${member["port"]} |= (1<<${member["pin"]});
 	uart_putc(0x00);
 	uart_putc(0x00);
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 
 void callback_get_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(PIN${member["port"]} & (1<<${member["pin"]})));
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 
 //${modulevar("direction", None, "B")}
@@ -44,16 +40,12 @@ void callback_set_${modulevar("direction")} (uint16_t payload_offset, uint16_t a
 		DDR${member["port"]} |= (1<<${member["pin"]});
 	uart_putc(0x00);
 	uart_putc(0x00);
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 
 void callback_get_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(DDR${member["port"]} & (1<<${member["pin"]})));
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 
 % if device["adc"].get(member["port"]+str(member["pin"])):
@@ -73,8 +65,6 @@ void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t args
 	while(!(ADCSRA&(1<<ADIF))); //wait for conversion to finish
 	putc_escaped(ADCH);
 	ADCSRA |= (1<<ADIF); //reset the interrupt flag
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 % endif
 
@@ -84,16 +74,12 @@ void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize
 	OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]} = args[0];
 	uart_putc(0x00);
 	uart_putc(0x00);
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 
 void callback_get_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	putc_escaped(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]});
-	uart_putc(0x00);
-	uart_putc(0x00);
 }
 % endif
 

@@ -2,39 +2,22 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#define debug_print(...) fprintf(stderr, __VA_ARGS__)
+#define debug_print(...) //fprintf(stderr, __VA_ARGS__)
 
-void ${module_callback("test_multipart", argformat="65B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    for(unsigned int i=0; i<argsize; i++){
-        if(args[i] != 'A'){
-            debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 0x41, got 0x%x\n", payload_offset, i, args[i]);
+void ${module_callback("test_callback", argformat="65B")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	uint8_t* args = (uint8_t*) cb->argbuf;
+    for(uint8_t* i = args; i<(uint8_t*)argbuf_end; i++){
+        if(*i != 'A'){
+            debug_print("Wrong byte in argument buffer at position 0x%x. Expected 0x41, got 0x%x\n", i, *i);
             exit(1);
         }
     }
-    switch(payload_offset){
-        case 0:
-        case 32:
-            if(argsize != ARGBUF_SIZE){
-                debug_print("Wrong argument size for payload offset %d. Expected %d, got %d\n", payload_offset, ARGBUF_SIZE, argsize);
-                exit(1);
-            }
-            break;
-        case 64:
-            if(argsize != 1){
-                debug_print("Wrong argument size for payload offset 64. Expected %d, got %d\n", ARGBUF_SIZE, argsize);
-                exit(1);
-            }
-            break;
-        default:
-            debug_print("Wrong payload_offset: %d\n", payload_offset);
-            exit(1);
-    }
 }
 
-${modulevar("test_buffer", "uint8_t", "65B", array=65)};
+${modulevar("test_buffer", "uint8_t", "257B", array=257)};
 
-void ${module_callback("check_test_buffer")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    for(unsigned int i=0; i<65; i++){
+void ${module_callback("check_test_buffer")} (const comm_callback_descriptor* cb, void* argbuf_end){
+    for(unsigned int i=0; i<sizeof(${modulevar("test_buffer")}); i++){
         uint8_t expected = 'A' + (i/32);
         if(${modulevar("test_buffer")}[i] != expected){
             debug_print("Wrong byte in the test buffer at position %d. Expected 0x%x, got 0x%x\n", i, expected, ${modulevar("test_buffer")}[i]);
@@ -43,42 +26,17 @@ void ${module_callback("check_test_buffer")} (uint16_t payload_offset, uint16_t 
     }
 }
 
-int test_pos = 0;
-
-void ${module_callback("test_call_long_args", argformat="257B")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    debug_print("called with test_pos %d\n", test_pos);
-    for(unsigned int i=0; i<argsize; i++){
-        if(args[i] != 'A'){
-            debug_print("Wrong byte in argument buffer for payload_offset %d at position %d. Expected 0x41, got 0x%x\n", payload_offset, i, args[i]);
+void ${module_callback("test_callback_long_args", argformat="257B")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	uint8_t* args = (uint8_t*)cb->argbuf;
+    for(uint8_t* i = args; i < (uint8_t*)argbuf_end; i++){
+        if(*i != 'A'){
+            debug_print("Wrong byte in argument buffer. Expected 0x41, got 0x%x\n", *i);
             exit(1);
         }
     }
-    int expected_size = (257-payload_offset);
-    if(expected_size > ARGBUF_SIZE){
-        expected_size = ARGBUF_SIZE;
-    }
-    if(argsize != expected_size){
-        debug_print("Wrong argument size for payload offset %d. Expected %d, got %d\n", payload_offset, expected_size, argsize);
-        exit(1);
-    }
-    if(payload_offset != test_pos){
-        debug_print("Wrong payload_offset: expected %d, got %d\n", test_pos, payload_offset);
-        exit(1);
-    }
-    test_pos += argsize;
-}
-
-void ${module_callback("test_call_long_args_final_check")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    if(payload_offset != 0){
-        debug_print("Wrong payload offset for debug call test_call_long_args_final_check: %d\n", payload_offset);
-        exit(1);
-    }
-    if(argsize != 0){
-        debug_print("Wrong argsize for debug call test_call_long_args_final_check: %d\n", argsize);
-        exit(1);
-    }
-    if(test_pos != 257){
-        debug_print("Somehow a callback with a long argument buffer did not finish. Last offset called: %d\n", test_pos);
+	uint16_t argsize = (uint8_t*)argbuf_end - args;
+    if(argsize != 257){
+        debug_print("Wrong argument size. Expected 257, got %d\n", argsize);
         exit(1);
     }
 }

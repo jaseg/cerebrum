@@ -29,7 +29,7 @@ void ${loop_function} (){
 	port |= row;
 	ddr |= row;
 	PORT${member["port"]} = port;
-	DDR${member["ddr"]} = ddr;
+	DDR${member["port"]} = ddr;
 	row <<= 1;
 	i++;
 	if(row == 0){

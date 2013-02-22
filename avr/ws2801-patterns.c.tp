@@ -89,6 +89,18 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 // rote lange wuerstchen
 % for i in range(member["length"]):
 % if i % 128 < 64:
+    0xFF, 0x00, 0x00,
+% else:
+    0x00, 0x00, 0x00,
+% endif
+% endfor
+
+
+// TEMPLATE CODE //////////////////////////////////////
+
+// rote lange wuerstchen
+% for i in range(member["length"]):
+% if i % 128 < 64:
     0x00, 0x00, 0xFF,
 % else:
     0x00, 0x00, 0x00,
@@ -98,47 +110,10 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 
 // TEMPLATE CODE //////////////////////////////////////
 
-% for i in range(member["length"]):
-<% foo=int(i*6/member["length"]) %>
-<% r=i-foo*member["length"]/6 %>
-% if foo == 0:
-    0xFF,
-    ${r*6/member["length"]}*255,
-    0x00,
-% endif
-% if foo == 1:
-    ${1-r*6/member["length"]}*255,
-    0xFF,
-    0x00,
-% endif
-% if foo == 2:
-    0x00,
-    0xFF,
-    ${r*6/member["length"]}*255,
-% endif
-% if foo == 3:
-    0x00,
-    ${1-r*6/member["length"]}*255,
-    0xFF,
-% endif
-% if foo == 4:
-    ${r*6/member["length"]}*255,
-    0x00,
-    0xFF,
-% endif
-% if foo == 5:
-    0xFF,
-    0x00,
-    ${1-r*6/member["length"]}*255,
-% endif
-% endfor
-
-// TEMPLATE CODE //////////////////////////////////////
-
 // kleiner weisser pupsi
 
 % for i in range(member["length"]):
-% if i < 16:
+% if i % 256 < 16:
 	0xFF, 0xFF, 0xFF,
 % else:
     0x00, 0x00, 0x00,
@@ -151,8 +126,8 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 // kleiner blauer pupsi
 
 % for i in range(member["length"]):
-% if i < 16:
-	0xFF, 0x00, 0xFF,
+% if i % 256 < 16:
+	0xFF, 0x00, 0x00,
 % else:
     0x00, 0x00, 0x00,
 % endif
@@ -163,7 +138,7 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 // kleiner gruener pupsi
 
 % for i in range(member["length"]):
-% if i < 16:
+% if i % 256 < 16:
 	0x00, 0xFF, 0x00,
 % else:
     0x00, 0x00, 0x00,
@@ -176,7 +151,7 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 // kleiner roter pupsi
 
 % for i in range(member["length"]):
-% if i < 16:
+% if i % 256 < 16:
 	0x00, 0x00, 0xFF,
 % else:
     0x00, 0x00, 0x00,
@@ -189,8 +164,8 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 // notbeleuchtung
 
 % for i in range(member["length"]):
-% if i % 64 < 16:
-    0x00, 0x88, 0x88,
+% if i % 32 < 4:
+    0x00, 0x24, 0x24,
 % else:
     0x00, 0x00, 0x00,
 % endif
@@ -198,24 +173,19 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 
 };
 
-
-
-
-//${modulevar("pattern", None, "B")}
-void callback_set_${modulevar("pattern")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    if (args[0] < NR_OF_PATTERNS) {
+//${modulevar("pattern", None, "B", accid=register_callback("callback_get_"+modulevar("pattern")))}
+//${register_callback("callback_set_"+modulevar("pattern"))}
+void callback_set_${modulevar("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
+    uint8_t pattern=((uint8_t*)cb->argbuf)[0];
+    if (pattern < NR_OF_PATTERNS) {
         //memcpy(${modulevar("buffer")}, patterns[args[0]], ${member["length"]*3});
-        memcpy_PF(${modulevar("buffer")}, patterns+(${member["length"]*3}*args[0]), ${member["length"]*3});
+        memcpy_PF(${modulevar("buffer")}, patterns+(${member["length"]*3}*pattern), ${member["length"]*3});
     }
-    uart_putc(0x00);
-    uart_putc(0x00);
     uart_putc(0x00);
     uart_putc(0x00);
 }
 
-void callback_get_${modulevar("pattern")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-    uart_putc(0x00);
-    uart_putc(0x00);
+void callback_get_${modulevar("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
     uart_putc(0x00);
     uart_putc(0x00);
 }
@@ -241,7 +211,3 @@ void ${loop_function()}(void){
 	_delay_us(1000);
 }
 
-void ${init_function()}(void){
-    uint8_t foo[] = {1};
-    callback_set_${modulevar("pattern")} (0,1,foo);
-}

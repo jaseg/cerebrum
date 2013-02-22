@@ -9,23 +9,29 @@
 #ifdef __AVR__
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #endif
 
 #include <comm.h>
 #include <autocode.h>
 #include <config.h>
 #include <uart.h>
+#ifdef __TEST__
+#include "comm_handle.h"
+#endif
 
 void init(void);
-void loop(void);
 
 int main(void){
     init();
 #ifdef __TEST__
     //debug stuff
-    while(!comm_loop());
+    int16_t v;
+    while((v = getchar()) >= 0){
+        comm_handle(v);
+    }
 #else
-    for(;;) loop();
+    for(;;) loop_auto();
 #endif
 }
 
@@ -45,6 +51,7 @@ void init(){
     P1SEL  |= 0x03;
     P1SEL2 |= 0x03;
 #elif defined(__AVR__)//__MSPGCC__
+    wdt_disable();
     uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
 #endif//AVR
 
@@ -58,7 +65,3 @@ void init(){
 #endif//__MSPGCC__
 }
 
-void loop(){
-	comm_loop();
-	loop_auto();
-}

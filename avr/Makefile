@@ -8,6 +8,7 @@ objects: autocode.c config.c uart.c ../common/main.c ../common/comm.c
 	avr-size main.elf
 
 program:
+	../tools/reset_arduino.py ${PORT}
 	avrdude -V -c ${PROGRAMMER} -P ${PORT} -b ${BAUDRATE} -U flash:w:main.hex -p ${MCU}
 
 clean:
