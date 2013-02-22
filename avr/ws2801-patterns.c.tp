@@ -160,7 +160,6 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 
 
 // TEMPLATE CODE //////////////////////////////////////
-
 // notbeleuchtung
 
 % for i in range(member["length"]):
@@ -171,11 +170,23 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 % endif
 % endfor
 
+
+// notbeleuchtung
+
+//% for i in range(member["length"]):
+//% if i % 32 < 4:
+    //0x00, 0x24, 0x24,
+//% else:
+    //0x00, 0x00, 0x00,
+//% endif
+//% endfor
+
 };
 
 //${modulevar("pattern", None, "B", accid=register_callback("callback_get_"+modulevar("pattern")))}
 //${register_callback("callback_set_"+modulevar("pattern"))}
 void callback_set_${modulevar("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
+//void callback_set_${modulevar("pattern")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
     uint8_t pattern=((uint8_t*)cb->argbuf)[0];
     if (pattern < NR_OF_PATTERNS) {
         //memcpy(${modulevar("buffer")}, patterns[args[0]], ${member["length"]*3});
@@ -211,3 +222,7 @@ void ${loop_function()}(void){
 	_delay_us(1000);
 }
 
+void ${init_function()}(void){
+    uint8_t index = 1;
+    memcpy_PF(${modulevar("buffer")}, patterns+(${member["length"]*3}*index), ${member["length"]*3});
+}
