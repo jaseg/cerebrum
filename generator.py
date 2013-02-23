@@ -67,6 +67,7 @@ void init_auto(){
 }
 
 void loop_auto(){
+	comm_loop();
     % for loopfunc in loop_functions:
         ${loopfunc}();
     % endfor

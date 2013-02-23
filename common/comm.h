@@ -19,10 +19,16 @@ struct comm_callback_descriptor {
 	void* argbuf;
 	uint16_t argbuf_len;
 };
+typedef struct {
+	comm_callback_descriptor* descriptor;
+	void* argbuf_end;
+} callback_stack_t;
+
 extern const comm_callback_descriptor comm_callbacks[];
 extern const uint16_t callback_count;
 
-extern const uint8_t global_argbuf[];
+extern volatile callback_stack_t next_callback;
+extern const volatile uint8_t global_argbuf[];
 
 #ifndef ARGBUF_SIZE
 //needs to be at least 4 bytes to accomodate args_t in comm_handle(uint8_t)
@@ -32,6 +38,8 @@ extern const uint8_t global_argbuf[];
 #define ARGBUF_SIZE 257
 #endif
 #endif
+
+void comm_loop(void);
 
 #endif//__COMM_H__
 

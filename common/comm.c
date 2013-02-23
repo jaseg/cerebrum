@@ -10,5 +10,13 @@
 #include <stddef.h>
 #include "comm.h"
 
-const uint8_t global_argbuf[ARGBUF_SIZE];
+const volatile uint8_t global_argbuf[ARGBUF_SIZE];
+volatile callback_stack_t next_callback;
+
+void comm_loop(){
+	if(next_callback.descriptor){
+		(*next_callback.descriptor->callback)(next_callback.descriptor, next_callback.argbuf_end);
+		next_callback.descriptor = 0;
+	}
+}
 
