@@ -259,7 +259,7 @@ def generate(desc, device, build_path, builddate, target = 'all'):
     #compile the whole stuff
     make_env = os.environ.copy()
     make_env['MCU'] = device.get('mcu')
-    subprocess.call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, 'clean', target], env=make_env)
+    subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, 'clean', target], env=make_env)
 
     return desc
 
@@ -270,7 +270,7 @@ def commit(device, build_path, args):
     make_env['PORT'] = args.port
     make_env['PROGRAMMER'] = device.get('programmer')
     make_env['BAUDRATE'] = str(device.get('baudrate'))
-    subprocess.call(['/usr/bin/env', "make",'--no-print-directory',  '-C', build_path, 'program'], env=make_env)
+    subprocess.check_call(['/usr/bin/env', "make",'--no-print-directory',  '-C', build_path, 'program'], env=make_env)
 
 class TestBuild(unittest.TestCase):
 
