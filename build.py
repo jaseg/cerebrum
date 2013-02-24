@@ -34,11 +34,9 @@ buildsource = 'stdin' if args.template.name is '-' else args.template.name
 print(builddate)
 print('Generating firmware from ', buildsource)
 
-# Import code generator module
-build_path = os.path.join(os.path.dirname(__file__), desc["type"])
-
 # Generate code and write generated build config
 # FIXME there are two different but similar things called "build config" here.
+build_path = os.path.join(os.path.dirname(__file__), desc["type"])
 buildconfig = generator.generate(desc, device, build_path, builddate)
 with open(os.path.join(os.path.dirname(__file__), "builds", builddate + "-" + args.buildname if args.buildname else os.path.splitext(os.path.basename(buildsource))[0] + ".config.json"), "w") as f:
 	f.write(json.JSONEncoder(indent=4).encode(buildconfig))

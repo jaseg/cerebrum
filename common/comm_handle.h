@@ -78,8 +78,9 @@ static inline void comm_handle(uint8_t c){
         comm_debug_print2("[DEBUG] calling callback\n");
         state.receiving = 0;
         if(current_callback->callback != 0){
-            sei();
-            (*current_callback->callback)(current_callback, argbuf_end);
+			next_callback.argbuf_end = argbuf_end;
+			next_callback.descriptor = current_callback;
+            //(*current_callback->callback)(current_callback, argbuf_end);
         }else{
             //Send a minimal response.
             uart_putc_nonblocking(0);
