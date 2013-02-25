@@ -1,0 +1,11 @@
+{
+	"type": "avr",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+		"matrix": {
+			"type": "led_matrix",
+			"port": "C"
+		}
+	}
+}
