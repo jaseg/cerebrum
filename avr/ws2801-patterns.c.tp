@@ -183,13 +183,12 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 
 };
 
-//${modulevar("pattern", None, "B", accid=register_callback("callback_get_"+modulevar("pattern")))}
-//${register_callback("callback_set_"+modulevar("pattern"))}
+//--- CALLBACK REGISTRATION DO NOT REMOVE ---
+//${modulevar("pattern", None, "B", callbacks=((True, "global_argbuf", "ARGBUF_SIZE"), (True, "global_argbuf", "ARGBUF_SIZE")))}
+//--- CALLBACK REGISTRATION DO NOT REMOVE ---
 void callback_set_${modulevar("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
-//void callback_set_${modulevar("pattern")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
     uint8_t pattern=((uint8_t*)cb->argbuf)[0];
     if (pattern < NR_OF_PATTERNS) {
-        //memcpy(${modulevar("buffer")}, patterns[args[0]], ${member["length"]*3});
         memcpy_PF(${modulevar("buffer")}, patterns+(${member["length"]*3}*pattern), ${member["length"]*3});
     }
     uart_putc(0x00);
@@ -205,7 +204,6 @@ ${modulevar("offset", "int16_t", "h")} = 0;
 ${modulevar("speed", "int8_t", "b")} = 2;
 
 void ${loop_function()}(void){
-	//for(uint8_t* i=${modulevar("buffer")}; i<${modulevar("buffer")}+${member["length"]*3}; i++){
 	for(uint16_t i=0; i<${member["length"]}; i++){
 		uint16_t j=${modulevar("offset")}+i;
 		if(j>=${member["length"]})
