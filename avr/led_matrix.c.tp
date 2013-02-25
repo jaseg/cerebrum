@@ -9,36 +9,38 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-void ${modulevar("buf")}_commit(void){
+${modulevar("raw_buffer", "uint8_t", "7B", 7)};
+
+//FIXME this is *definitely* not elegant.
+${modulevar("buffer", "uint8_t", "28B", 28, callbacks=(None, True))};
+void callback_set_${modulevar("buffer")}(const comm_callback_descriptor* cb, void* argbuf_end){
 	uint8_t t = 0;
 	for(uint8_t i = 7; i>0; i--){
+        ${modulevar("raw_buffer")}[i-1] = 0;
 		for(uint8_t j = 0; j<i; j++){
-			${modulevar("internalBuffer")}[i] |= ${modulevar("externalBuffer")}[t];
+			${modulevar("raw_buffer")}[i-1] |= ${modulevar("buffer")}[t]<<j;
 			t++;
 		}
 	}
+	uart_putc(0x00);
+	uart_putc(0x00);
 }
 
-//The DDRs of the led matrix outputs are set in the mux loop.
-void ${loop_function} (){
+void ${loop_function()} (){
+	static uint8_t i = 0;
 	static uint8_t row = 2;	//selects the currently active "row" of the matrix. On the
 							//protoboards I make, this more or less corresponds to physical traces.
-	static uint8_t i = 0;
-	uint8_t ddr = ${modulevar("internalBuffer")}[i];
-	uint8_t port = ~ddr;
-	port |= row;
-	ddr |= row;
-	PORT${member["port"]} = port;
-	DDR${member["port"]} = ddr;
-	row <<= 1;
+	uint8_t data = ${modulevar("raw_buffer")}[i];
+	DDR${member["port"]}  = 0; //FIXME This is supposed to prevent "ghosting". Is it really necessary?
+    PORT${member["port"]} = 0;
+	PORT${member["port"]} = data;
+	DDR${member["port"]}  = data | row;
 	i++;
+	row <<= 1;
 	if(row == 0){
 		row = 2;
 		i = 0;
 	}
+    _delay_ms(1);
 }
-
-//this scary construct is in place to make the compiler happy. if you know a better way, feel free to improve.
-uint8_t ${modulevar("internalBuffer")}[7];
-uint8_t ${modulevar("externalBuffer", "uint8_t", "28B", 28, set_action=modulevar("buf")+"_commit();")};
 

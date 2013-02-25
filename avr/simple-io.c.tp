@@ -18,7 +18,7 @@ void ${init_function()} (void){
 % endif
 }
 
-//${modulevar("state", None, "B")}
+//${modulevar("state", None, "B", callbacks=(True, True))}
 void callback_set_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	PORT${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
@@ -33,7 +33,7 @@ void callback_get_${modulevar("state")} (uint16_t payload_offset, uint16_t argsi
 	uart_putc(!!(PIN${member["port"]} & (1<<${member["pin"]})));
 }
 
-//${modulevar("direction", None, "B")}
+//${modulevar("direction", None, "B", callbacks=(True, True))}
 void callback_set_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	DDR${member["port"]} &= ~(1<<${member["pin"]});
 	if(args[0])
@@ -49,7 +49,7 @@ void callback_get_${modulevar("direction")} (uint16_t payload_offset, uint16_t a
 }
 
 % if device["adc"].get(member["port"]+str(member["pin"])):
-//${modulevar("analog", None, "B")}
+//${modulevar("analog", None, "B", callbacks=(True, True))}
 void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	uart_putc(0x00);
 	uart_putc(0x01);
@@ -69,7 +69,7 @@ void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t args
 % endif
 
 % if device["pwm"].get(member["port"]+str(member["pin"])):
-//${modulevar("pwm", None, "B")}
+//${modulevar("pwm", None, "B", callbacks=(True, True))}
 void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
 	OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]} = args[0];
 	uart_putc(0x00);
