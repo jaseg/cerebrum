@@ -9,48 +9,50 @@
 #include <avr/io.h>
 
 void ${init_function()} (void){
-% if device["pwm"].get(member["port"]+str(member["pin"])):
-	${device["pwm"].get(member["port"]+str(member["pin"]))[1]}
-% endif
-% if device["adc"].get(member["port"]+str(member["pin"])):
-	ADMUX |= REFS0 | ADLAR;
-	ADCSRA |= ADEN | device["adc"]["prescaler_bits"];
-% endif
+	% if device["adc"].get(member["port"]+str(member["pin"])):
+		ADMUX |= REFS0 | ADLAR;
+		ADCSRA |= ADEN | ${device["adc"]["prescaler_bits"]};
+	% endif
 }
 
-//${modulevar("state", None, "B", callbacks=(True, True))}
-void callback_set_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-	PORT${member["port"]} &= ~(1<<${member["pin"]});
-	if(args[0])
+//${modulevar("state", None, "B", callbacks=(2, 2))}
+void ${setter("state")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	uint8_t arg=((uint8_t*)cb->argbuf)[0];
+	if(arg)
 		PORT${member["port"]} |= (1<<${member["pin"]});
+	else
+		PORT${member["port"]} &= ~(1<<${member["pin"]});
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
 
-void callback_get_${modulevar("state")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+void ${getter("state")} (const comm_callback_descriptor* cb, void* argbuf_end){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(PIN${member["port"]} & (1<<${member["pin"]})));
 }
 
-//${modulevar("direction", None, "B", callbacks=(True, True))}
-void callback_set_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+//${modulevar("direction", None, "B", callbacks=(2, 2))}
+void ${setter("direction")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	uint8_t arg=((uint8_t*)cb->argbuf)[0];
 	DDR${member["port"]} &= ~(1<<${member["pin"]});
-	if(args[0])
+	if(arg)
 		DDR${member["port"]} |= (1<<${member["pin"]});
+	else
+		DDR${member["port"]} &= ~(1<<${member["pin"]});
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
 
-void callback_get_${modulevar("direction")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+void ${getter("direction")} (const comm_callback_descriptor* cb, void* argbuf_end){
 	uart_putc(0x00);
 	uart_putc(0x01);
 	uart_putc(!!(DDR${member["port"]} & (1<<${member["pin"]})));
 }
 
 % if device["adc"].get(member["port"]+str(member["pin"])):
-//${modulevar("analog", None, "B", callbacks=(True, True))}
-void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+//${modulevar("analog", None, "B", callbacks=(2, None))}
+void ${getter("analog")} (const comm_callback_descriptor* cb, void* argbuf_end){
 	uart_putc(0x00);
 	uart_putc(0x01);
 #if defined(__AVR_ATmega48__) ||defined(__AVR_ATmega88__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega48P__) || defined(__AVR_ATmega88P__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega328P__)
@@ -63,23 +65,42 @@ void callback_get_${modulevar("analog")} (uint16_t payload_offset, uint16_t args
 	ADCSRB |= ${device["adc"].get(member["port"]+str(member["pin"]))}&0x20>>2;
 #endif
 	while(!(ADCSRA&(1<<ADIF))); //wait for conversion to finish
-	putc_escaped(ADCH);
+	uart_putc(ADCH);
 	ADCSRA |= (1<<ADIF); //reset the interrupt flag
 }
 % endif
 
 % if device["pwm"].get(member["port"]+str(member["pin"])):
-//${modulevar("pwm", None, "B", callbacks=(True, True))}
-void callback_set_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
-	OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]} = args[0];
+//${modulevar("pwm", None, "B", callbacks=(2, 2))}
+void ${setter("pwm")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	uint8_t arg=((uint8_t*)cb->argbuf)[0];
+	OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]}${device["pwm"].get(member["port"]+str(member["pin"]))[1]} = arg;
 	uart_putc(0x00);
 	uart_putc(0x00);
 }
 
-void callback_get_${modulevar("pwm")} (uint16_t payload_offset, uint16_t argsize, uint8_t* args){
+void ${getter("pwm")} (const comm_callback_descriptor* cb, void* argbuf_end){
 	uart_putc(0x00);
 	uart_putc(0x01);
-	putc_escaped(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]});
+	uart_putc(OCR${device["pwm"].get(member["port"]+str(member["pin"]))[0]}${device["pwm"].get(member["port"]+str(member["pin"]))[1]});
+}
+
+//${modulevar("pwm_enabled", None, "B", callbacks=(2, 2))}
+void ${getter("pwm_enabled")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	//FIXME not implemented
+	uart_putc(0x00);
+	uart_putc(0x00);
+}
+
+void ${setter("pwm_enabled")} (const comm_callback_descriptor* cb, void* argbuf_end){
+	uint8_t arg=((uint8_t*)cb->argbuf)[0];
+	if(arg){
+		${device["pwm"].get(member["port"]+str(member["pin"]))[2]}
+	}else{
+		${device["pwm"].get(member["port"]+str(member["pin"]))[3]}
+	}
+	uart_putc(0x00);
+	uart_putc(0x00);
 }
 % endif
 

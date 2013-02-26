@@ -16,6 +16,7 @@ void ${init_function()} (void){
 }
 
 //this is blocking!
+//${module_callback("spi_transfer", argformat="B", retformat="B")}
 uint8_t spi_transfer(uint8_t data){
 	SPDR = data;
 	while(!(SPSR & _BV(SPIF))){

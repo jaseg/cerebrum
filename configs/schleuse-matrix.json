@@ -6,6 +6,36 @@
 		"matrix": {
 			"type": "led_matrix",
 			"port": "C"
+		},
+		"linksmitte": {
+			"type": "simple-io",
+			"port": "E",
+			"pin": 3
+		},
+		"linksoben": {
+			"type": "simple-io",
+			"port": "E",
+			"pin": 4
+		},
+		"linksunten": {
+			"type": "simple-io",
+			"port": "E",
+			"pin": 5
+		},
+		"mitteunten": {
+			"type": "simple-io",
+			"port": "H",
+			"pin": 4
+		},
+		"meterio3": {
+			"type": "simple-io",
+			"port": "H",
+			"pin": 3
+		},
+		"meterio5": {
+			"type": "simple-io",
+			"port": "G",
+			"pin": 5
 		}
 	}
 }

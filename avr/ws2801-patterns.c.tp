@@ -186,7 +186,7 @@ const uint8_t patterns[NR_OF_PATTERNS*${member["length"]*3}] PROGMEM = {
 //--- CALLBACK REGISTRATION DO NOT REMOVE ---
 //${modulevar("pattern", None, "B", callbacks=((True, "global_argbuf", "ARGBUF_SIZE"), (True, "global_argbuf", "ARGBUF_SIZE")))}
 //--- CALLBACK REGISTRATION DO NOT REMOVE ---
-void callback_set_${modulevar("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
+void ${setter("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
     uint8_t pattern=((uint8_t*)cb->argbuf)[0];
     if (pattern < NR_OF_PATTERNS) {
         memcpy_PF(${modulevar("buffer")}, patterns+(${member["length"]*3}*pattern), ${member["length"]*3});
@@ -195,7 +195,7 @@ void callback_set_${modulevar("pattern")} (const comm_callback_descriptor* cb, v
     uart_putc(0x00);
 }
 
-void callback_get_${modulevar("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
+void ${getter("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end){
     uart_putc(0x00);
     uart_putc(0x00);
 }

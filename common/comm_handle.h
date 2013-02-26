@@ -25,7 +25,7 @@ static inline void comm_handle(uint8_t c){
 	static state_t state;
 	static void* argbuf;
 	static void* argbuf_end;
-	static const comm_callback_descriptor* current_callback;
+	static comm_callback_descriptor* current_callback;
 	args_t* args = (args_t*)global_argbuf;
 #define ARGS_END (((uint8_t*)(args))+sizeof(args_t))
     //comm_debug_print("[DEBUG] received %c\n", c);

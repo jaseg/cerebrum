@@ -12,8 +12,8 @@
 ${modulevar("raw_buffer", "uint8_t", "7B", 7)};
 
 //FIXME this is *definitely* not elegant.
-${modulevar("buffer", "uint8_t", "28B", 28, callbacks=(None, True))};
-void callback_set_${modulevar("buffer")}(const comm_callback_descriptor* cb, void* argbuf_end){
+${modulevar("buffer", "uint8_t", "28B", 28, callbacks=(0, 1))};
+void ${setter("buffer")}(const comm_callback_descriptor* cb, void* argbuf_end){
 	uint8_t t = 0;
 	for(uint8_t i = 7; i>0; i--){
         ${modulevar("raw_buffer")}[i-1] = 0;
