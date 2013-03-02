@@ -52,7 +52,7 @@ void init(){
     P1SEL2 |= 0x03;
 #elif defined(__AVR__)//__MSPGCC__
     wdt_disable();
-    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(115200, F_CPU));
+    uart_init(UART_BAUD_SELECT_DOUBLE_SPEED(CEREBRUM_BAUDRATE, F_CPU));
 #endif//AVR
 
 	init_auto();

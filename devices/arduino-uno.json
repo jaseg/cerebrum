@@ -1,7 +1,8 @@
 {
 	"type": "avr",
 	"programmer": "arduino",
-	"baudrate": 115200,
+	"programmer_baudrate": 115200,
+    "cerebrum_baudrate": 115200,
 	"mcu": "atmega328p",
 	"clock": 16000000,
 	"pwm": {
