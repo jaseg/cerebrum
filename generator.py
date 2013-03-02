@@ -194,7 +194,6 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 					elif desc == 2:
 						return register_callback("callback_{}_{}".format(cbtype, varname), "global_argbuf", "ARGBUF_SIZE")
 					else:
-						print(desc, varname) 
 						cbname, buf, buflen = desc
 						if cbname is True:
 							cbname = "callback_{}_{}".format(cbtype, varname)
