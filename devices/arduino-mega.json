@@ -1,7 +1,8 @@
 {
 	"type": "avr",
 	"programmer": "stk500v2",
-	"baudrate": 115200,
+	"cerebrum_baudrate": 115200,
+    "programmer_baudrate": 115200,
 	"mcu": "atmega2560",
 	"clock": 16000000,
 	"pwm": {
