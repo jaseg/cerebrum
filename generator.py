@@ -224,7 +224,7 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 
 			return varname
 
-		def module_callback(name, argformat="", retformat=""):
+		def module_callback(name, argformat="", retformat="", regname=None):
 			"""Register a regular module callback.
 
 				I hereby officially discourage the (sole) use of this function since these callbacks or functions as they
@@ -234,7 +234,7 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 
 			"""
 			cbname = 'callback_{}_{}_{}'.format(mtype, seqnum, name)
-			cbid = register_callback(cbname)
+			cbid = register_callback(regname or cbname)
 			func = { 'id': cbid }
 			#Save some space in the build config (that later gets burned into the µC's really small flash!)
 			if argformat is not '':
