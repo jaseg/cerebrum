@@ -8,7 +8,8 @@
 		},
 		"ws2801": {
 			"type": "ws2801-patterns",
-			"length": 516
+			"length": 516,
+            "segments": [["foo", 0, 128], ["bar", 128, 128], ["baz", 256, 128], ["fnord", 384, 128]]
 		}
 	}
 }
