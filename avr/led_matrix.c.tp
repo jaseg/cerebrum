@@ -33,7 +33,11 @@ void ${loop_function()} (){
 	uint8_t data = ${modulevar("raw_buffer")}[i];
 	DDR${member["port"]}  = 0; //FIXME This is supposed to prevent "ghosting". Is it really necessary?
     PORT${member["port"]} = 0;
+% if member.get("inverted", False):
+	PORT${member["port"]} = ~data | row;
+% else:
 	PORT${member["port"]} = data;
+% endif
 	DDR${member["port"]}  = data | row;
 	i++;
 	row <<= 1;

@@ -1,0 +1,17 @@
+{
+	"type": "avr",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+		"panelsecke": {
+			"type": "led_matrix",
+			"port": "F",
+			"inverted": true
+		},
+		"panelsgang": {
+			"type": "led_matrix",
+			"port": "K",
+			"inverted": true
+		}
+	}
+}
