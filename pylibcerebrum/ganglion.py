@@ -39,6 +39,7 @@ class Ganglion(object):
 		# get a config
 		if ser is None:
 			assert(jsonconfig is None)
+			object.__setattr__(self, '_opened_ser', None) #This must be set here so in case of an error __del__ does not end in infinite recursion
 			s = serial.Serial(port=device, baudrate=baudrate, timeout=1)
 			#Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
 			s.setXonXoff(True)
@@ -75,6 +76,7 @@ class Ganglion(object):
 			def proxy_method(*args):
 				return self._callfunc(func["id"], fun.get("args", ""), args, func.get("returns", ""))
 			self.functions[name] = func
+		object.__setattr__(self, 'type', jsonconfig.get('type', None))
 		object.__setattr__(self, 'config', { k: v for k,v in jsonconfig.items() if not k in ['members', 'properties', 'functions'] })
 	
 	def __del__(self):
@@ -85,19 +87,8 @@ class Ganglion(object):
 
 	def close(self):
 		"""Close the serial port."""
-		try:
+		if self._opened_ser:
 			self._opened_ser.close()
-		except AttributeError:
-			pass
-
-	def type(self):
-		"""Return the cerebrum type of this node.
-		
-		If this method returns None, that means the node has no type as it is the
-		case in pure group nodes. For leaf nodes the leaf type is returned, the
-		root node returns the device type (e.g. "avr")
-		"""
-		return self._config.get("type")
 
 	def __iter__(self):
 		"""Construct an iterator to iterate over *all* (direct or not) child nodes of this node."""
