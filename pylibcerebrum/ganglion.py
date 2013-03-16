@@ -37,9 +37,9 @@ class Ganglion(object):
 
 		"""
 		# get a config
+		object.__setattr__(self, '_opened_ser', None) #This must be set here so in case of an error __del__ does not end in infinite recursion
 		if ser is None:
 			assert(jsonconfig is None)
-			object.__setattr__(self, '_opened_ser', None) #This must be set here so in case of an error __del__ does not end in infinite recursion
 			s = serial.Serial(port=device, baudrate=baudrate, timeout=1)
 			#Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
 			s.setXonXoff(True)
