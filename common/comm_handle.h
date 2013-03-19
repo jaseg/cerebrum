@@ -28,11 +28,6 @@ static inline void comm_handle(uint8_t c){
 	static comm_callback_descriptor* current_callback;
 	args_t* args = (args_t*)global_argbuf;
 #define ARGS_END (((uint8_t*)(args))+sizeof(args_t))
-    //comm_debug_print("[DEBUG] received %c\n", c);
-    /*uart_putc_nonblocking('A');
-    uart_putc_nonblocking(c);
-    uart_putc_nonblocking(state.escaped);
-    uart_putc_nonblocking(state.receiving);*/
 	if(state.escaped){
         state.escaped = 0;
 		if(c == '#'){
@@ -80,7 +75,7 @@ static inline void comm_handle(uint8_t c){
         if(current_callback->callback != 0){
 			next_callback.argbuf_end = argbuf_end;
 			next_callback.descriptor = current_callback;
-            //(*current_callback->callback)(current_callback, argbuf_end);
+            (*current_callback->callback)(current_callback, argbuf_end);
         }else{
             //Send a minimal response.
             uart_putc_nonblocking(0);
