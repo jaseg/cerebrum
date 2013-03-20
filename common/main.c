@@ -29,6 +29,7 @@ int main(void){
     int16_t v;
     while((v = getchar()) >= 0){
         comm_handle(v);
+		loop_auto();
     }
 #else
     for(;;) loop_auto();

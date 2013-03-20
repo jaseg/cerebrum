@@ -7,6 +7,7 @@
 import subprocess
 import os.path
 import time
+import random
 from threading import Thread
 import struct
 from inspect import isfunction
@@ -113,16 +114,17 @@ config_c_template = """\
 #endif
 
 unsigned int auto_config_descriptor_length = ${desc_len};
-const char auto_config_descriptor[] PROGMEM = {${desc}};
+char const auto_config_descriptor[] PROGMEM = {${desc}};
 """
 
 #FIXME possibly make a class out of this one
 #FIXME I think the target parameter is not used anywhere. Remove?
-def generate(desc, device, build_path, builddate, target = 'all'):
+def generate(desc, device, build_path, builddate, target = 'all', config_address=None):
 	members = desc["members"]
 	seqnum = 23 #module number (only used during build time to generate unique names)
 	current_id = 0
 	desc["builddate"] = str(builddate)
+	config_address = config_address or random.randint(0, 65534)
 	autocode = Template(autocode_header).render_unicode(version=desc["version"], builddate=builddate)
 	init_functions = []
 	loop_functions = []
@@ -281,6 +283,7 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 	make_env['MCU'] = device.get('mcu')
 	make_env['CLOCK'] = str(device.get('clock'))
 	make_env['CEREBRUM_BAUDRATE'] = str(device.get('cerebrum_baudrate'))
+	make_env['CONFIG_ADDRESS'] = str(config_address) #65535 is reserved as discovery address
 	subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, 'clean', target], env=make_env)
 
 	return desc
@@ -300,19 +303,12 @@ class TestBuild(unittest.TestCase):
 		pass
 
 	def test_basic_build(self):
-		generate({'members': {}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17')
-
-def compareJSON(bytesa, bytesb):
-	jsona = json.JSONDecoder().decode(str(bytesa, "ASCII"))
-	normstra = bytes(json.JSONEncoder(separators=(',',':')).encode(jsona), 'ASCII')
-	jsonb = json.JSONDecoder().decode(str(bytesb, "ASCII"))
-	normstrb = bytes(json.JSONEncoder(separators=(',',':')).encode(jsonb), 'ASCII')
-	return normstra == normstrb
+		generate({'members': {}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', config_address=0x2342)
 
 class TestCommStuff(unittest.TestCase):
 
 	def setUp(self):
-		generate({'members': {'test': {'type': 'test'}}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17')
+		generate({'members': {'test': {'type': 'test'}}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', config_address=0x2342)
 
 	def new_test_process(self):
 		#spawn a new communication test process
@@ -333,7 +329,7 @@ class TestCommStuff(unittest.TestCase):
 	def test_config_descriptor(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x00\x00\x00')
+		stdin.write(b'\\#\x23\x42\x00\x00\x00\x00')
 		stdin.flush()
 		stdin.close()
 
@@ -349,7 +345,7 @@ class TestCommStuff(unittest.TestCase):
 	def test_multipart_call(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+		stdin.write(b'\\#\x23\x42\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 		stdin.flush()
 		stdin.close()
 		
@@ -361,7 +357,7 @@ class TestCommStuff(unittest.TestCase):
 		"""Test whether the test function actually fails when given invalid data."""
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA')
+		stdin.write(b'\\#\x23\x42\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA')
 		stdin.flush()
 		stdin.close()
 		
@@ -372,8 +368,8 @@ class TestCommStuff(unittest.TestCase):
 	def test_multipart_call_long_args(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*257)
-		stdin.write(b'\\#\x00\x06\x00\x00')
+		stdin.write(b'\\#\x23\x42\x00\x05\x01\x01'+b'A'*257)
+		stdin.write(b'\\#\x23\x42\x00\x06\x00\x00')
 		stdin.flush()
 		stdin.close()
 		
@@ -386,7 +382,7 @@ class TestCommStuff(unittest.TestCase):
 		"""Test whether the test function actually fails when given invalid data."""
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128)
+		stdin.write(b'\\#\x23\x42\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128)
 		stdin.flush()
 		stdin.close()
 		
@@ -397,8 +393,8 @@ class TestCommStuff(unittest.TestCase):
 	def test_attribute_accessors_multipart(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x03\x01\x01'+b'A'*32+b'B'*32+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
-		stdin.write(b'\\#\x00\x04\x00\x00') # call check_test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x03\x01\x01'+b'A'*32+b'B'*32+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x04\x00\x00') # call check_test_buffer
 		stdin.flush()
 		stdin.close()
 		
@@ -409,8 +405,8 @@ class TestCommStuff(unittest.TestCase):
 	def test_meta_attribute_accessors_multipart(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x03\x01\x01'+b'A'*33+b'B'*31+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
-		stdin.write(b'\\#\x00\x04\x00\x00') # call check_test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x03\x01\x01'+b'A'*33+b'B'*31+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x04\x00\x00') # call check_test_buffer
 		stdin.flush()
 		stdin.close()
 		

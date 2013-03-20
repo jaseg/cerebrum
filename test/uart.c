@@ -19,6 +19,10 @@ void uart_putc(uint8_t c){
     printf("%c", c);
 }
 
+void uart_putc_nonblocking(uint8_t c){
+	printf("%c", c);
+}
+
 uint16_t uart_getc(){
     return getchar();
 }

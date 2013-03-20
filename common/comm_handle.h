@@ -8,7 +8,8 @@
 #define comm_debug_print(...) //fprintf(stderr, __VA_ARGS__)
 #define comm_debug_print2(...) //fprintf(stderr, __VA_ARGS__)
 #else//__TEST__
-#define htobe16(...) (__VA_ARGS__)
+//AVR/MSP430 targets
+#define be16toh(i) ((i>>8)|(i<<8))
 #define comm_debug_print(...)
 #define comm_debug_print2(...)
 #endif//__TEST__
@@ -19,13 +20,14 @@ static inline void comm_handle(uint8_t c){
 		uint8_t escaped:1;
 	} state_t;
 	typedef struct {
+		uint16_t node_id;
 		uint16_t funcid;
 		uint16_t arglen;
 	} args_t;
 	static state_t state;
 	static void* argbuf;
 	static void* argbuf_end;
-	static comm_callback_descriptor* current_callback;
+	static comm_callback_descriptor const * current_callback;
 	args_t* args = (args_t*)global_argbuf;
 #define ARGS_END (((uint8_t*)(args))+sizeof(args_t))
 	if(state.escaped){
@@ -53,17 +55,32 @@ static inline void comm_handle(uint8_t c){
 	if(argbuf == argbuf_end){
 		if(argbuf_end == ARGS_END){
 			comm_debug_print("[DEBUG] received the header\n");
-			if(htobe16(args->funcid) >= callback_count){ //only jump to valid callbacks.
-                comm_debug_print("[DEBUG] invalid callback: funcid=0x%x given, callback_count=0x%x\n", htobe16(args->funcid), callback_count);
+			uint16_t addr = be16toh(args->node_id);
+			if(addr != CONFIG_ADDRESS){
+				if(addr == ADDRESS_DISCOVERY){
+					//With a packet addressed to the discovery address a master may discover the nodes on the bus.
+					//Here the funcid and arglen fields are abused as a "selector" to describe the nodes answering
+					//to this request. The selector works just like a network address/netmask pair in IP,
+					//the numeric (e.g. /8) netmask being in arglen and the network address in funcid.
+					if((CONFIG_ADDRESS & (0xFFFF>>be16toh(args->arglen))) == be16toh(args->funcid)){
+						//Send a "I'm here!"-response.
+						uart_putc_nonblocking(0xFF);
+					}
+				}
+				state.receiving = 0;
+				return;
+			}
+			if(be16toh(args->funcid) >= callback_count){ //only jump to valid callbacks.
+                comm_debug_print("[DEBUG] invalid callback: funcid=0x%x given, callback_count=0x%x\n", be16toh(args->funcid), callback_count);
                 state.receiving = 0; //return to idle state
                 return;
             }
             comm_debug_print("[DEBUG] getting the callback\n");
-            argbuf = comm_callbacks[htobe16(args->funcid)].argbuf;
-            current_callback = comm_callbacks + htobe16(args->funcid);
+            argbuf = comm_callbacks[be16toh(args->funcid)].argbuf;
+            current_callback = comm_callbacks + be16toh(args->funcid);
             uint16_t len = current_callback->argbuf_len;
-            if(htobe16(args->arglen) <= len){
-                len = htobe16(args->arglen);
+            if(be16toh(args->arglen) <= len){
+                len = be16toh(args->arglen);
             }
             argbuf_end = argbuf+len;
             if(argbuf != argbuf_end){

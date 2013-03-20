@@ -20,7 +20,7 @@ struct comm_callback_descriptor {
 	uint16_t argbuf_len;
 };
 typedef struct {
-	comm_callback_descriptor* descriptor;
+	comm_callback_descriptor const * descriptor;
 	void* argbuf_end;
 } callback_stack_t;
 
@@ -38,6 +38,8 @@ extern const volatile uint8_t global_argbuf[];
 #define ARGBUF_SIZE 257
 #endif
 #endif
+
+#define ADDRESS_DISCOVERY 0xFFFF
 
 void comm_loop(void);
 
