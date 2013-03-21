@@ -1,4 +1,1 @@
  * add timeouts in the device-side serial protocol parser
- * convert protocol to little endian
- * remove not-yet crc stuff
- * the unit testing code is pretty redundant
