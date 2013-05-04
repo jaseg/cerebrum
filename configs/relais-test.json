@@ -1,0 +1,14 @@
+{
+	"type": "avr",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+		"spi": {
+			"type": "spi"
+		},
+		"ws2801": {
+			"type": "ws2801-chain",
+			"length": 6
+		}
+	}
+}

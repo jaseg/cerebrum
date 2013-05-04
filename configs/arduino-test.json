@@ -3,9 +3,34 @@
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
 	"members": {
-		"led": {
+		"analog0": {
 			"type": "simple-io",
-			"port": "B",
+			"port": "C",
+			"pin": 0
+		},
+		"analog1": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 1
+		},
+		"analog2": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 2
+		},
+		"analog3": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 3
+		},
+		"analog4": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 4
+		},
+		"analog5": {
+			"type": "simple-io",
+			"port": "C",
 			"pin": 5
 		}
 	}

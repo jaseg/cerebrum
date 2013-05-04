@@ -12,4 +12,4 @@ program:
 	avrdude -V -c ${PROGRAMMER} -P ${PORT} -b ${PROGRAMMER_BAUDRATE} -U flash:w:main.hex -p ${MCU}
 
 clean:
-	#rm main.elf main.hex
+	rm main.elf main.hex autocode.h config.c

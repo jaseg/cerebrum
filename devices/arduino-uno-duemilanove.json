@@ -1,0 +1,30 @@
+{
+	"type": "avr",
+	"programmer": "arduino",
+	"baudrate": 57600,
+	"chip": "atmega328p",
+	"clock": 16000000,
+	"pwm": {
+		"D6": ["0A", "TCCR0A |= (1<<COM0A1) | (1<<WGM00) | (1<<WGM01); TCCR0B |= (1<<CS00);"],
+		"D5": ["0B", "TCCR0A |= (1<<COM0B1) | (1<<WGM00) | (1<<WGM01); TCCR0B |= (1<<CS00);"],
+		"B1": ["1A", "TCCR1A |= (1<<COM1A1) | (1<<WGM10); TCCR1B |= (1<<WGM12) | (1<<CS10);"],
+		"B2": ["1B", "TCCR1A |= (1<<COM1B1) | (1<<WGM10); TCCR1B |= (1<<WGM12) | (1<<CS10);"],
+		"B3": ["2A", "TCCR2A |= (1<<COM2A1) | (1<<WGM00) | (1<<WGM01); TCCR2B |= (1<<CS20);"],
+		"D3": ["2B", "TCCR2A |= (1<<COM2B1) | (1<<WGM00) | (1<<WGM01); TCCR2B |= (1<<CS20);"]
+	},
+	"adc": {
+		"prescaler_bits": "ADPS2 | ADPS1 | ADPS0",
+		"C0": 0,
+		"C1": 1,
+		"C2": 2,
+		"C3": 3,
+		"C4": 4,
+		"C5": 5
+	},
+	"spi": {
+		"port": "B",
+		"mosi": 3,
+		"sck": 5,
+		"ss": 2
+	}
+}
