@@ -29,9 +29,9 @@ int main(void){
     _BIS_SR(GIE);
 
     for(;;){
-		comm_loop();
-        loop_auto();
-        unsigned int i = 0xffff;
-        while(--i);
+		while((v = getchar()) >= 0){
+			comm_handle(v);
+		}
+		loop_auto();
     }
 }
