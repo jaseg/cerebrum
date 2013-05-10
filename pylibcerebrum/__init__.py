@@ -1,3 +1,3 @@
 
-__all__ = ["ganglion"]
+__all__ = ["ganglion", "serial_mux"]
 
