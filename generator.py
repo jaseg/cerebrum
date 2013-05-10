@@ -120,12 +120,12 @@ char const auto_config_descriptor[] PROGMEM = {${desc}};
 
 #FIXME possibly make a class out of this one
 #FIXME I think the target parameter is not used anywhere. Remove?
-def generate(desc, device, build_path, builddate, target = 'all', config_address=None):
+def generate(desc, device, build_path, builddate, target = 'all', node_id=None):
 	members = desc["members"]
 	seqnum = 23 #module number (only used during build time to generate unique names)
 	current_id = 0
 	desc["builddate"] = str(builddate)
-	config_address = config_address or random.randint(0, 65534)
+	node_id = node_id or random.randint(0, 65534)
 	autocode = Template(autocode_header).render_unicode(version=desc["version"], builddate=builddate)
 	init_functions = []
 	loop_functions = []
@@ -290,8 +290,11 @@ def generate(desc, device, build_path, builddate, target = 'all', config_address
 	make_env['MCU'] = device.get('mcu')
 	make_env['CLOCK'] = str(device.get('clock'))
 	make_env['CEREBRUM_BAUDRATE'] = str(device.get('cerebrum_baudrate'))
-	make_env['CONFIG_ADDRESS'] = str(config_address) #65535 is reserved as discovery address
+	make_env['CONFIG_ADDRESS'] = str(node_id) #65535 is reserved as discovery address
 	subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, 'clean', target], env=make_env)
+
+	desc['node_id'] = node_id
+	print('\x1b[92;1mNode ID:\x1b[0m {:#04x}'.format(node_id))
 
 	return desc
 
@@ -310,12 +313,12 @@ class TestBuild(unittest.TestCase):
 		pass
 
 	def test_basic_build(self):
-		generate({'members': {}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', config_address=0x2342)
+		generate({'members': {}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', node_id=0x2342)
 
 class TestCommStuff(unittest.TestCase):
 
 	def setUp(self):
-		generate({'members': {'test': {'type': 'test'}}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', config_address=0x2342)
+		generate({'members': {'test': {'type': 'test'}}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', node_id=0x2342)
 
 	def new_test_process(self):
 		#spawn a new communication test process

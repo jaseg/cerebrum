@@ -18,7 +18,7 @@ class SerialMux(object):
 	
 	def open(self, node_id):
 		""" Open a Ganglion by node ID """
-		return Ganglion(node_id, ser=self._ser)
+		return Ganglion(node_id, ser=self.ser)
 
 	def discover(self, mask=0, address=0, found=[]):
 		""" Discover all node IDs connected to the bus
@@ -26,7 +26,7 @@ class SerialMux(object):
 			Note: You do not need to set any of the arguments. These are used for the recursive discovery process.
 		"""
 		for a in [address, 1<<mask | address]:
-			if self._send_probe(a, mask):
+			if self._send_probe(a, 15-mask):
 				if(mask < 15):
 					self.discover(mask+1, a, found)
 				else:
@@ -38,7 +38,7 @@ class SerialMux(object):
 		with self.ser as s:
 			s.write(b'\\#\xFF\xFF' + struct.pack('>HH', address, mask))
 			timeout_tmp = s.timeout
-			s.timeout = 0.0005
+			s.timeout = 0.005
 			try:
 				s.read(1)
 				s.timeout = timeout_tmp
