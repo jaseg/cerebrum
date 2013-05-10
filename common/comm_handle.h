@@ -2,6 +2,7 @@
 #define COMM_HANDLE_H
 
 #include "comm.h"
+#include "uart.h"
 #ifdef __TEST__
 #include <stdio.h>
 #include <endian.h> //FIXME detect endianness
