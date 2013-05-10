@@ -1,0 +1,23 @@
+{
+	"type": "avrusb",
+    "cerebrum_baudrate": 115200,
+	"mcu": "atmega8u2",
+	"clock": 16000000,
+	"pwm": {
+		"B7": ["0A", "TCCR0A |= (1<<COM0A1) | (1<<WGM00) | (1<<WGM01); TCCR0B |= (1<<CS00);"],
+		"D0": ["0B", "TCCR0A |= (1<<COM0B1) | (1<<WGM00) | (1<<WGM01); TCCR0B |= (1<<CS00);"],
+		"C6": ["1A", "TCCR1A |= (1<<COM1A1) | (1<<WGM10); TCCR1B |= (1<<WGM12) | (1<<CS10);"],
+		"C5": ["1B", "TCCR1A |= (1<<COM1B1) | (1<<WGM10); TCCR1B |= (1<<WGM12) | (1<<CS10);"],
+	},
+	"spi": {
+		"port": "B",
+		"mosi": 2,
+		"sck": 1,
+		"ss": 0
+	},
+	"uart": {
+		"port": "D",
+		"rx": 2,
+		"tx": 3
+	}
+}
