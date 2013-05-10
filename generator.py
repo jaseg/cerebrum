@@ -12,6 +12,7 @@ from threading import Thread
 import struct
 from inspect import isfunction
 from mako.template import Template
+from mako import exceptions
 import binascii
 import json
 try:
@@ -245,18 +246,24 @@ def generate(desc, device, build_path, builddate, target = 'all', config_address
 			functions[name] = func
 			return cbname
 
-		#Flesh out the module template!
-		tp = Template(filename=typepath)
-		autocode += tp.render_unicode(
-				init_function=init_function,
-				loop_function=loop_function,
-				modulevar=modulevar,
-				setter=lambda x: 'callback_set_'+modulevar(x),
-				getter=lambda x: 'callback_get_'+modulevar(x),
-				module_callback=module_callback,
-				register_callback=register_callback,
-				member=member,
-				device=device)
+		try:
+			#Flesh out the module template!
+			tp = Template(filename=typepath)
+			autocode += tp.render_unicode(
+					init_function=init_function,
+					loop_function=loop_function,
+					modulevar=modulevar,
+					setter=lambda x: 'callback_set_'+modulevar(x),
+					getter=lambda x: 'callback_get_'+modulevar(x),
+					module_callback=module_callback,
+					register_callback=register_callback,
+					member=member,
+					device=device)
+		except Exception as e:
+			print('-----[\x1b[91;1mException occurred while rendering a module\x1b[0m]-----')
+			print(exceptions.text_error_template().render().strip())
+			print('-----[end]-----')
+			raise e
 
 		#Save some space in the build config (that later gets burned into the µC's really small flash!)
 		if functions:
