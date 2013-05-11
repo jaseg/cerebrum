@@ -34,7 +34,7 @@ st = datetime.datetime.utcnow().timetuple()
 builddate = str(datetime.datetime(st[0], st[1], st[2], st[3], st[4], st[5]))
 buildsource = 'stdin' if args.template.name is '-' else args.template.name
 print(builddate)
-print('Generating firmware from ', buildsource)
+print('Generating firmware from ', buildsource, "for", desc['type'])
 
 # Generate code and write generated build config
 # FIXME there are two different but similar things called "build config" here.

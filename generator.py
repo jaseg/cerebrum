@@ -291,7 +291,7 @@ def generate(desc, device, build_path, builddate, target = 'all', node_id=None):
 	make_env['CLOCK'] = str(device.get('clock'))
 	make_env['CEREBRUM_BAUDRATE'] = str(device.get('cerebrum_baudrate'))
 	make_env['CONFIG_MAC'] = str(node_id) #0xFFFF,FFFF,FFFF,FFFF is reserved as discovery address
-	subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, 'clean', target], env=make_env)
+	subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, target], env=make_env)
 
 	desc['node_id'] = node_id
 	print('\x1b[92;1mNode ID:\x1b[0m {:#016x}'.format(node_id))
