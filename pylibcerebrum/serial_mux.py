@@ -44,7 +44,7 @@ class SerialMux(object):
 		with self.ser as s:
 			s.write(b'\\#\xFF\xFF' + struct.pack('>HHQ', next_address, mask, mac))
 			timeout_tmp = s.timeout
-			s.timeout = 0.005
+			s.timeout = 0.05
 			try:
 				s.read(1)
 				s.timeout = timeout_tmp
