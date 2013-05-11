@@ -9,7 +9,7 @@ OPTIMIZATION = s
 TARGET       = main
 SRC          = autocode.c config.c main.c ../common/comm.c Descriptors.c $(LUFA_SRC_USB) $(LUFA_SRC_USBCLASS)
 LUFA_PATH    = lufa/LUFA
-CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -I. -I../common -DCONFIG_ADDRESS=${CONFIG_ADDRESS}
+CC_FLAGS     = -DUSE_LUFA_CONFIG_HEADER -I. -I../common -DCONFIG_MAC=${CONFIG_MAC}
 LD_FLAGS     =
 
 # Default target

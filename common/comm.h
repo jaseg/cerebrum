@@ -40,6 +40,7 @@ extern const volatile uint8_t global_argbuf[];
 #endif
 
 #define ADDRESS_DISCOVERY 0xFFFF
+#define ADDRESS_INVALID 0xFFFE
 
 void comm_loop(void);
 

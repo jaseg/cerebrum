@@ -10,7 +10,17 @@
 #define comm_debug_print2(...) //fprintf(stderr, __VA_ARGS__)
 #else//__TEST__
 //AVR/MSP430 targets
-#define be16toh(i) ((i>>8)|(i<<8))
+#define be16toh(x) ((x>>8)|(x<<8))
+//from <bits/byteswap.h>
+# define be64toh(x) \
+   (__extension__ ((((x) & 0xff00000000000000ull) >> 56) \
+				 | (((x) & 0x00ff000000000000ull) >> 40) \
+				 | (((x) & 0x0000ff0000000000ull) >> 24) \
+				 | (((x) & 0x000000ff00000000ull) >> 8) \
+				 | (((x) & 0x00000000ff000000ull) << 8) \
+				 | (((x) & 0x0000000000ff0000ull) << 24) \
+				 | (((x) & 0x000000000000ff00ull) << 40) \
+				 | (((x) & 0x00000000000000ffull) << 56)))
 #define comm_debug_print(...)
 #define comm_debug_print2(...)
 #endif//__TEST__
@@ -19,6 +29,8 @@ static inline void comm_handle(uint8_t c){
 	typedef struct {
 		uint8_t receiving:1;
 		uint8_t escaped:1;
+		uint8_t mac_received:1;
+		uint8_t receive_args:1;
 	} state_t;
 	typedef struct {
 		uint16_t node_id;
@@ -28,6 +40,7 @@ static inline void comm_handle(uint8_t c){
 	static state_t state;
 	static void* argbuf;
 	static void* argbuf_end;
+	static uint16_t current_address = ADDRESS_INVALID;
 	static comm_callback_descriptor const * current_callback;
 	args_t* args = (args_t*)global_argbuf;
 #define ARGS_END (((uint8_t*)(args))+sizeof(args_t))
@@ -35,6 +48,7 @@ static inline void comm_handle(uint8_t c){
         state.escaped = 0;
 		if(c == '#'){
 			state.receiving = 1;
+			state.receive_args = 1;
 			argbuf = args;
 			argbuf_end = ARGS_END;
             comm_debug_print("[DEBUG] starting message, argbuf @0x%x, argbuf_end @0x%x\n", argbuf, argbuf_end);
@@ -54,18 +68,28 @@ static inline void comm_handle(uint8_t c){
 	argbuf++;
     comm_debug_print("[DEBUG] stored 0x%x at 0x%x, end at 0x%x\n", c, argbuf, argbuf_end);
 	if(argbuf == argbuf_end){
-		if(argbuf_end == ARGS_END){
+		if(state.receive_args){
+			state.receive_args = 0;
 			comm_debug_print("[DEBUG] received the header\n");
 			uint16_t addr = be16toh(args->node_id);
-			if(addr != CONFIG_ADDRESS){
+			if(addr != current_address){
 				if(addr == ADDRESS_DISCOVERY){
-					//With a packet addressed to the discovery address a master may discover the nodes on the bus.
-					//Here the funcid and arglen fields are abused as a "selector" to describe the nodes answering
-					//to this request. The selector works just like a network address/netmask pair in IP,
-					//the numeric (e.g. /8) netmask being in arglen and the network address in funcid.
-					if((CONFIG_ADDRESS & (0xFFFF>>be16toh(args->arglen))) == be16toh(args->funcid)){
-						//Send a "I'm here!"-response.
-						uart_putc_nonblocking(0xFF);
+					if(state.mac_received){
+						state.mac_received = 0;
+						//With a packet addressed to the discovery address a master may discover the nodes on the bus.
+						//FIXME some doc would be nice, eh?
+						if((CONFIG_MAC & (0xFFFFFFFFFFFFFFFFull>>(be16toh(args->arglen)&0x3F))) == be64toh(*((uint64_t*)ARGS_END))){
+							//Send a "I'm here!"-response.
+							uart_putc_nonblocking(0xFF);
+							//Set the new address
+							current_address = args->funcid;
+						}else{
+						}
+					}else{
+						state.receive_args = 1;
+						state.mac_received = 1;
+						argbuf_end += sizeof(uint64_t);
+						return;
 					}
 				}
 				state.receiving = 0;

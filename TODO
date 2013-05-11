@@ -1,1 +1,2 @@
  * add timeouts in the device-side serial protocol parser
+ * Fix escape sequence handling in the protocol
