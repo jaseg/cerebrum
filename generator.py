@@ -21,7 +21,7 @@ except:
 	import pylzma as lzma
 import codecs
 import unittest
-"""Automatic Cerebrum c code generator"""
+"""Automatic Cerebrum C code generator"""
 
 # Code templates. Actually, this is the only device-dependent place in this whole
 # file, and actually only a very few lines are device-dependent.
@@ -176,10 +176,11 @@ def generate(desc, device, build_path, builddate, target = 'all', node_id=None):
 				`array` can be used to generated accessors for module variables that are arrays.
 
 				`callbacks` can be a tuple of one or two values. Each value corresponds to one callback. If the tuple contains
-				only one value, no setter will be generated and the variable will be marked read-only. A value of `None` prompts
-				the generation of the "default" accessor function. A value of `True` prompts the registration of an accessor
+				only one value, no setter will be generated and the variable will be marked read-only. A value of 0 prompts
+				the generation of the "default" accessor function. A value of 1 prompts the registration of an accessor
 				function of the form `callback_(get|set)_${modulevar(name)}` whose argument is stored in the module variable
-				buffer itself and which you must implement yourself. You may also specify a tuple of the form `(cbname, buf, buflen)`
+				buffer itself and which you must implement yourself. A value of 2 does the same storing the data in the global
+				argument buffer. You may also specify a tuple of the form `(cbname, buf, buflen)`
 				where `cbname` is the name of your callback and `buf` and `buflen` are the argument buffer and argument buffer length,
 				respectively.
 			"""
