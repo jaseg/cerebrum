@@ -19,6 +19,10 @@ generated. One copy is put in the ```builds/``` folder, another is
 lzma-compressed and hardcoded into the firmware to be used by host libraries
 for device discovery.
 
+To use the integrated USB controller of some AVRs with the avrusb target place a
+copy of the [LUFA not-so-lightweight AVR usb stack](http://www.fourwalledcubicle.com/LUFA.php)
+in ```avrusb/lufa```.
+
 ## Adding Modules
 
 More modules can be added in form of "module-name.c.tp" files in the respective
