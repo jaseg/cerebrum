@@ -24,33 +24,40 @@ g.schnurmitte.state = 1
 g.schnurrechts.state = 1
 print('starting event loop')
 
+def inc_color(r,g,b):
+	state = requests.post(BASE_URI, data='{"method": "lightSync.pull", "params": [], "id": 0}').json()['result']
+	for v in state:
+		cr = ((round(v['red']	/64.0) + r) % 5)
+		cg = ((round(v['green']	/64.0) + g) % 5)
+		cb = ((round(v['blue']	/64.0) + b) % 5)
+		if cr > 1: cr = 2
+		if cg > 1: cg = 2
+		if cb > 1: cb = 2
+		v['red']	= cr*127
+		v['green']	= cg*127
+		v['blue']	= cb*127
+	requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [state], 'id': 0}))
+
 oldstate = None
-cr, cg, cb = 0, 0, 0
+sr, sg, sb = False, False, False
 while 1:
 	if g.schnurlinks.state:
-		cr = 0
+		if sr:
+			inc_color(1,0,0)
+		sr = False
 	else:
-		cr = 1
+		sr = True
 	if g.schnurmitte.state:
-		cg = 0
+		if sg:
+			inc_color(0,1,0)
+		sg = False
 	else:
-		cg = 1
+		sg = True
 	if g.schnurrechts.state:
-		cb = 0
+		if sb:
+			inc_color(0,0,1)
+		sb = False
 	else:
-		cb = 1
-	if cr or cg or cb:
-		res = requests.post(BASE_URI, data='{"method": "lightSync.pull", "params": [], "id": 0}').json()
-		if not oldstate:
-			oldstate = res['result']
-		state = copy.deepcopy(res['result'])
-		for v in state:
-			v['red'] = 255 if cr else 0
-			v['green'] = 255 if cg else 0
-			v['blue'] = 255 if cb else 0
-		requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [state], 'id': 0}))
-	elif oldstate:
-		requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [oldstate], 'id': 0}))
-		oldstate = None
+		sb = True
 	time.sleep(0.1)
 
