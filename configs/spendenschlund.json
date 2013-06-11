@@ -3,32 +3,32 @@
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
 	"members": {
-        "schnur-links": {
+        "schnurlinks": {
             "type": "simple-io",
             "port": "D",
             "pin":  7
         },
-        "schnur-rechts": {
+        "schnurrechts": {
             "type": "simple-io",
             "port": "B",
             "pin":  0
         },
-        "schnur-mitte": {
+        "schnurmitte": {
             "type": "simple-io",
             "port": "B",
             "pin":  1
         },
-		"schlund-gruen": {
+		"schlundgruen": {
 			"type": "simple-io",
 			"port": "C",
 			"pin": 3
 		},
-		"schlund-blau": {
+		"schlundblau": {
 			"type": "simple-io",
 			"port": "C",
 			"pin": 5
 		},
-        "schlund-rot": {
+        "schlundrot": {
             "type": "simple-io",
             "port": "D",
             "pin":  0
