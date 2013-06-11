@@ -3,17 +3,17 @@
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
 	"members": {
-        "schnurlinks": {
+        "schnurrechts": {
             "type": "simple-io",
             "port": "D",
             "pin":  7
         },
-        "schnurrechts": {
+        "schnurmitte": {
             "type": "simple-io",
             "port": "B",
             "pin":  0
         },
-        "schnurmitte": {
+        "schnurlinks": {
             "type": "simple-io",
             "port": "B",
             "pin":  1
