@@ -6,10 +6,12 @@ import json
 import requests
 from pylibcerebrum.serial_mux import SerialMux
 
-BASE_URI='http://10.0.1.43/dmxacl/json/'
-PORT = '/dev/ttyUSB0'
+BASE_URI	='http://10.0.1.43/dmxacl/json/'
+PORT		= '/dev/ttyUSB0'
+BAUDRATE	= 57600
+GAMMA		= 2.5
 
-s = SerialMux(PORT, 57600)
+s = SerialMux(PORT, BAUDRATE)
 print('discovering cerebrum devices')
 results = []
 while not results:
@@ -27,15 +29,15 @@ print('starting event loop')
 def inc_color(r,g,b):
 	state = requests.post(BASE_URI, data='{"method": "lightSync.pull", "params": [], "id": 0}').json()['result']
 	for v in state:
-		cr = ((round(v['red']	/64.0) + r) % 5)
-		cg = ((round(v['green']	/64.0) + g) % 5)
-		cb = ((round(v['blue']	/64.0) + b) % 5)
-		if cr > 1: cr = 2
-		if cg > 1: cg = 2
-		if cb > 1: cb = 2
-		v['red']	= cr*127
-		v['green']	= cg*127
-		v['blue']	= cb*127
+		cr = ((round(v['red']	/64.0) + r) % 5)/4
+		cg = ((round(v['green']	/64.0) + g) % 5)/4
+		cb = ((round(v['blue']	/64.0) + b) % 5)/4
+		cr = cr ** GAMMA
+		cg = cg ** GAMMA
+		cb = cb ** GAMMA
+		v['red']	= round(cr*255)
+		v['green']	= round(cg*255)
+		v['blue']	= round(cb*255)
 	requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [state], 'id': 0}))
 
 oldstate = None
