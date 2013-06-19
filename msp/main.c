@@ -10,14 +10,15 @@
 #include <msp430.h>
 #include "autocode.h"
 #include "comm.h"
+#include "uart_msp.h"
 
 int main(void){
     WDTCTL = WDTPW | WDTHOLD; //Disable WDT
-    P1DIR = 0x41; //P1.6 (green led) and P1.0 (red LED) outputs
+    //P1DIR = 0x41; //P1.6 (green led) and P1.0 (red LED) outputs
 
     //oscillator control
-    DCOCTL |= DCO1 | DCO0;
-    BCSCTL1 |= RSEL3 | RSEL2 | RSEL0; 
+    DCOCTL  = CALDCO_16MHZ;
+    BCSCTL1 = CALBC1_16MHZ;
     
     //UART io setup (RX: P1.1, TX: P1.2)
     P1SEL  |= 0x03;
@@ -29,9 +30,7 @@ int main(void){
     _BIS_SR(GIE);
 
     for(;;){
-		while((v = getchar()) >= 0){
-			comm_handle(v);
-		}
+		uart_loop();
 		loop_auto();
     }
 }

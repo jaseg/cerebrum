@@ -260,11 +260,13 @@ def generate(desc, device, build_path, builddate, target = 'all', node_id=None):
 					register_callback=register_callback,
 					member=member,
 					device=device)
-		except Exception as e:
-			print('-----[\x1b[91;1mException occurred while rendering a module\x1b[0m]-----')
+		except:
+			print('-----[\x1b[91;1mException occurred while rendering module {}\x1b[0m]-----'.format(mname))
+			print('Current module definition:')
+			print(json.dumps(member, indent=4, separators=(',', ': ')))
 			print(exceptions.text_error_template().render().strip())
 			print('-----[end]-----')
-			raise e
+			raise
 
 		#Save some space in the build config (that later gets burned into the µC's really small flash!)
 		if functions:

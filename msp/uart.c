@@ -1,419 +1,90 @@
 /*
-* Copyright (c) 2012, Alexander I. Mykyta
-* All rights reserved.
-* 
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met: 
-* 
-* 1. Redistributions of source code must retain the above copyright notice, this
-*    list of conditions and the following disclaimer. 
-* 2. Redistributions in binary form must reproduce the above copyright notice,
-*    this list of conditions and the following disclaimer in the documentation
-*    and/or other materials provided with the distribution. 
-* 
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-* ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+ * This file is part of the MSP430 hardware UART example.
+ *
+ * Copyright (C) 2012 Stefan Wendler <sw@kaltpost.de>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-/*==================================================================================================
-* File History:
-* NAME          DATE         COMMENTS
-* Alex M.       11/15/2010   born
-* 
-*=================================================================================================*/
-
-/**
-* \addtogroup MOD_UART
-* \{
-**/
-
-/**
-* \file
-* \brief Code for \ref MOD_UART "UART IO"
-* \author Alex Mykyta (amykyta3@gmail.com)
-**/
-
-#include <stdint.h>
-#include <stddef.h>
+/******************************************************************************
+ * Hardware UART example for MSP430.
+ *
+ * Stefan Wendler
+ * sw@kaltpost.de
+ * http://gpio.kaltpost.de
+ ******************************************************************************/
 
 #include <msp430.h>
-#include "result.h"
-#include "uart_io.h"
-#include "uart_io_internal.h"
-#include "fifo.h"
+#include <legacymsp430.h>
 
-///\cond PRIVATE
-#if (UIO_USE_INTERRUPTS == 1)
-	char rxbuf[UIO_RXBUF_SIZE];
-	FIFO_t RXFIFO;
-	char txbuf[UIO_TXBUF_SIZE];
-	FIFO_t TXFIFO;
-	
-	uint8_t	txbusy;
-#endif
-///\endcond
+#include "comm.h"
+#include "comm_handle.h"
+#include "uart_msp.h"
 
-///\addtogroup UART_FUNCTIONS
-///\{
+unsigned char uart_txfifo[32];
+unsigned char *uart_txfifo_head = uart_txfifo;
+unsigned char *uart_txfifo_tail = uart_txfifo;
 
-//==================================================================================================
-// Hardware Abstraction Layer
-//==================================================================================================
-/**
-* \brief Initializes the UART controller
-* \param None
-* \return Nothing
-* \attention The initialization routine does \e not setup the IO ports!
-**/
-void init_uart(void){
-#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	UIO_CTL1 |= UCSWRST; // soft reset
-	UIO_CTL0 = 0;
-	UIO_CTL1 = (UIO_CLK_SRC*64)+UCSWRST;
-	UIO_BR0	= UIO_BR0_DEFAULT;
-	UIO_BR1	= UIO_BR1_DEFAULT;
-	UIO_MCTL = UIO_MCTL_DEFAULT;
-	
-	UIO_CTL1 &= ~UCSWRST;
-	
-#if (UIO_USE_INTERRUPTS == 1)
-	fifo_init(&RXFIFO,rxbuf,UIO_RXBUF_SIZE);
-	fifo_init(&TXFIFO,txbuf,UIO_TXBUF_SIZE);
-	txbusy = 0;
-#if (UIO_ISR_SPLIT == 0)
-	UIO_IE = UCRXIE;
-#else
-	UIO_IE = UIO_UCARXIE;
-#endif
-#endif
-
-#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	#error "Hardware Abstraction for UCA not written yet!"
-#endif
+void uart_init(void)
+{
+  	UCA0CTL1 |= UCSSEL_2;                     // SMCLK
+  	UCA0BR0 = 138;                            // 16MHz 115200
+  	UCA0BR1 = 0;                              // 16MHz 115200
+  	UCA0BR1 = 0;                              // 16MHz 115200
+  	UCA0MCTL = UCBRS2;                        // Modulation UCBRSx = 1
+  	UCA0CTL1 &= ~UCSWRST;                     // Initialize USCI state machine
+  	IE2 |= UCA0RXIE;                          // Enable USCI_A0 RX interrupt
 }
 
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Gets a character from the inuart_put stream
-* \param None
-* \retval uint8_t Character
-**/
-uint16_t uart_getc_nonblocking(void){
-#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if (UIO_USE_INTERRUPTS == 1)
-	uint16_t chr;
-	if(fifo_rdcount(&RXFIFO) == 0){ // no char received
-        return(0x0100);
-    }else{
-        fifo_read(&RXFIFO,&chr,1);
-        return(chr);
-    }
-#else
-	if((UIO_IFG & UCRXIFG) == 0){ // no char received
-        return(0x0100);
-    }else{
-        return(UIO_RXBUF);
-    }
-#endif
-
-#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	#error "Hardware Abstraction for UCA not written yet!"
-#endif
+int uart_getc()
+{
+    if(!(IFG2&UCA0RXIFG))
+		return -1;
+	return UCA0RXBUF;
 }
 
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Gets a character from the inuart_put stream
-* \details If a character is not immediately available, function will block until it receives one.
-* \param None
-* \retval uint8_t Character
-**/
-uint8_t uart_getc(void){
-#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if (UIO_USE_INTERRUPTS == 1)
-	uint8_t chr;
-	while(fifo_rdcount(&RXFIFO) == 0); // wait until char recieved
-	fifo_read(&RXFIFO,&chr,1);
-	return(chr);
-#else
-	while((UIO_IFG & UCRXIFG) == 0); // wait until char recieved
-	return(UIO_RXBUF);
-#endif
-
-#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	#error "Hardware Abstraction for UCA not written yet!"
-#endif
-}
-
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Returns the number of characters immediately available for inuart_put
-* \param None
-* \retval uint16_t Characters available
-**/
-uint16_t incount(void){
-#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if (UIO_USE_INTERRUPTS == 1)
-	return(fifo_rdcount(&RXFIFO));
-#else
-	if((UIO_IFG & UCRXIFG) != 0){
-		return(1);
-	}
-	else{
-		return(0);
-	}
-#endif
-
-#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	#error "Hardware Abstraction for UCA not written yet!"
-#endif
-}
-
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Sends a character
-* \param [in] c Character to be sent
-* \return Nothing
-**/
-void uart_putc(uint8_t c){
-#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if (UIO_USE_INTERRUPTS == 1)
-	uint8_t chr;
-	while(fifo_wrcount(&TXFIFO) == 0); // wait until fifo has room for another
-	fifo_write(&TXFIFO,&c,1);
-	
-	if(txbusy == 0){
-		txbusy = 1;
-		fifo_read(&TXFIFO,&chr,1);
-		UIO_TXBUF = chr;
-		#if (UIO_ISR_SPLIT == 0)
-		UIO_IE |= UCTXIE;
-		#else
-		UIO_IE |= UIO_UCATXIE;
-		#endif
-		
-	}
-#else
-	while((UIO_IFG & UCTXIFG) == 0); // wait until txbuf is empty
-	UIO_TXBUF = c;
-#endif
-
-#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	#error "Hardware Abstraction for UCA not written yet!"
-#endif
-}
-
-//--------------------------------------------------------------------------------------------------
-
-///\cond PRIVATE
-#if defined(__MSP430_HAS_USCI__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if (UIO_USE_INTERRUPTS == 1)
-#if (UIO_ISR_SPLIT == 0)
-// RX/TX Interrupt Service Routine
-#pragma vector=UIO_ISR_VECTOR
-__interrupt void UIO_rxtxISR(void) {
-
-	uint16_t iv = UIO_IV;
-	uint8_t chr;
-	if(iv == 0x02){
-		// Data Recieved
-		chr = UIO_RXBUF;
-		fifo_write(&RXFIFO,&chr,1);
-	}else if(iv == 0x04){
-		// Transmit Buffer Empty
-		if(fifo_read(&TXFIFO,&chr,1) == RES_OK){
-			UIO_TXBUF = chr;
-		}else{
-			txbusy = 0;
-			UIO_IE &= ~UCTXIE; // disable tx interrupt
+void uart_loop(){
+	if(uart_txfifo_head != uart_txfifo_tail){
+		if(!uart_try_putc(*uart_txfifo_tail)){
+			uart_txfifo_tail++;
+			if(uart_txfifo_tail > uart_txfifo+sizeof(uart_txfifo))
+				uart_txfifo_tail = uart_txfifo;
 		}
 	}
 }
-#else
-// RX Interrupt Service Routine
-#pragma vector=UIO_RXISR_VECTOR 
-__interrupt void UIO_rxISR(void) {
-	uint8_t chr;
-	chr = UIO_RXBUF;
-	fifo_write(&RXFIFO,&chr,1);
+
+void uart_putc_nonblocking(unsigned char c){
+	*uart_txfifo_head = c;
+	uart_txfifo_head++;
+	if(uart_txfifo_head > uart_txfifo+sizeof(uart_txfifo))
+		uart_txfifo_head = uart_txfifo;
 }
 
-// TX Interrupt Service Routine
-#pragma vector=UIO_TXISR_VECTOR
-__interrupt void UIO_txISR(void) {
-	uint8_t chr;
-	if(fifo_read(&TXFIFO,&chr,1) == RES_OK){
-			UIO_TXBUF = chr;
-	}else{
-		txbusy = 0;
-		UIO_IE &= ~UIO_UCATXIE; // disable tx interrupt
-	}
-}
-#endif
-#endif
-
-#elif defined(__MSP430_HAS_UCA__)	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	#error "Hardware Abstraction for UCA not written yet!"
-#endif
-
-///\endcond
-
-//==================================================================================================
-//   General functions
-//==================================================================================================
-/**
-* \brief Sends a string to the serial port
-* \param [in] s Pointer to string to be sent
-* \return Nothing
-**/
-void uart_puts(char *s) {
-	while(*s) {
-		//if(*s == '\n') What the heck is this for?
-		//	uart_putc('\r');
-		uart_putc(*s++);
-	}
+unsigned char uart_try_putc(unsigned char c){
+	if(!(IFG2&UCA0TXIFG))
+		return 1;
+  	UCA0TXBUF = c;                    		// TX
+	return 0;
 }
 
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Reads in a string until a newline character ( \c \n)is received
-* \details If an entire is not immediately available, function will block until it receives a
-*	newline character.
-* \param [in] line Pointer to line buffer to be used. Buffer /e MUST be large enough to receive
-*	the line!
-* \return Pointer to the received string
-**/
-char* uart_getline(char *line){
-	char *ch = line;
-	uint8_t k;
-	
-	// until we read a newline
-    while ((k = uart_getc()) != '\n') {
-		*ch++ = k;
-	}
-	
-	// newline dropped and Null-terminating character added
-    *ch = '\0';
-	
-	// return original pointer
-    return(line); 
+void uart_putc(unsigned char c)
+{
+	while (!(IFG2&UCA0TXIFG));              // USCI_A0 TX buffer ready?
+  	UCA0TXBUF = c;                    		// TX
 }
 
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Prints a HEX formatted string
-* \param [in] value Value to be printed
-* \param [in] places Number of digits to print. Use \c 0 to automatically determine how many digits.
-* \return Nothing
-**/
-void uart_putx(uint16_t value, uint16_t places){
-	int16_t i;
-	uint16_t j;
-	uint16_t bitmask;
-	if(places == 0){
-		// size places to fit number
-		bitmask = 0xF000;
-		places = 4;
-		while(((value & bitmask) == 0) && (places > 0)){
-			places--;
-			bitmask = bitmask >> 4;
-		}
-		if(places == 0){
-			places = 1;
-		}
-	}
-	for(i = ((places-1)<<2); i >= 0; i -= 4) {
-		j = (value >> i) & 0xf;
-		if(j < 10) 
-			uart_putc('0' + j);
-		else 
-			uart_putc('A' - 10 + j);
-	}
+interrupt(USCIAB0RX_VECTOR) USCI0RX_ISR(void)
+{
+	comm_handle(UCA0RXBUF);
 }
-
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Prints an unsigned decimal formatted string
-* \param [in] value Value to be printed
-* \return Nothing
-**/
-void uart_putd(uint16_t value){
-  uint16_t n;
-  uint8_t str[5];
-  n = 5;
-
-  do{
-    n -=1;
-    str[n]=(value % 10) + '0';
-    value /= 10;
-  } while(value != 0);
-
-  do{
-    uart_putc(str[n]);
-    n++;
-  } while(n<5);
-}
-
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Prints an unsigned decimal formatted string (32 bit version)
-* \param [in] value Value to be printed
-* \return Nothing
-**/
-void uart_putd32(uint32_t value){
-  uint16_t n;
-  uint8_t str[10];
-  n = 10;
-
-  do{
-    n -=1;
-    str[n]=(value % 10) + '0';
-    value /= 10;
-  } while(value != 0);
-
-  do{
-    uart_putc(str[n]);
-    n++;
-  } while(n<10);
-}
-//--------------------------------------------------------------------------------------------------
-/**
-* \brief Prints a signed decimal formatted string
-* \param [in] value Value to be printed
-* \return Nothing
-**/
-void uart_putsd(int16_t value){
-  uint16_t n;
-  uint16_t uvalue;
-  uint8_t str[5];
-  n = 5;
-  
-  if(value < 0){
-    uart_putc('-');
-    value = -value;
-  }
-  uvalue = (uint16_t) value;
-  
-  do{
-    n -=1;
-    str[n]=(uvalue % 10) + '0';
-    uvalue /= 10;
-  } while(uvalue != 0);
-
-  do{
-    uart_putc(str[n]);
-    n++;
-  } while(n<5);
-}
-
-///\}
-
-///\}

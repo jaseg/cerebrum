@@ -78,7 +78,7 @@ static inline void comm_handle(uint8_t c){
 						state.mac_received = 0;
 						//With a packet addressed to the discovery address a master may discover the nodes on the bus.
 						//FIXME some doc would be nice, eh?
-						if((CONFIG_MAC & (0xFFFFFFFFFFFFFFFFULL>>(be16toh(args->arglen)&0x3F))) == be64toh(*((uint64_t*)ARGS_END))){
+						if((CONFIG_MAC & (0xFFFFFFFFFFFFFFFFull>>(be16toh(args->arglen)&0x3F))) == be64toh(*((uint64_t*)ARGS_END))){
 							//Send a "I'm here!"-response.
 							uart_putc_nonblocking(0xFF);
 							//Set the new address
