@@ -26,7 +26,7 @@ print('starting event loop')
 
 def sendstate(value):
 	print('SENDING', value)
-	requests.post(CBEAM, data=json.dumps({'method': 'trafomatic!', 'params': [value], 'id': 0}))
+	requests.post(CBEAM, data=json.dumps({'method': 'trafotron', 'params': [value], 'id': 0}))
 
 oldval = -2*SEND_THRESHOLD
 while True:
