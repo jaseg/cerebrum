@@ -9,8 +9,8 @@ from pylibcerebrum.serial_mux import SerialMux
 CBEAM			= 'http://10.0.1.27:4254/rpc/'
 PORT			= '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_7523230313535161C072-if00'
 BAUDRATE		= 115200
-AVG_SAMPLES		= 256
-SEND_THRESHOLD	= 5
+AVG_SAMPLES		= 128
+SEND_THRESHOLD	= 3
 
 s = SerialMux(PORT, BAUDRATE)
 print('discovering cerebrum devices')
