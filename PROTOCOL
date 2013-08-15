@@ -1,8 +1,7 @@
 
- "\\#" [2 bytes id] [2 bytes length] [n bytes args] [2 byte crc] [dev:2 bytes length] [dev:n byte payload] [dev:2 byte crc] call function
+[2 bytes preamble: "\\#"] [2 bytes node address] [2 bytes function id] [2 bytes length] [n bytes args] [device: 2 bytes length] [device: n byte payload]
+[2 bytes preamble: "\\#"] [discovery address: 0xFFFF] [2 bytes node address to be assigned] [2 bytes MAC mask length] [8 bytes node MAC pattern] [device: 1 byte ack (0xFF)]
 
-If the host sends 0 bytes of arguments, the host-side crs may be omitted.
+The function id 0x0000 always returns the device descriptor in (possibly LZMA-ed) JSON
 
-special functions:
-0x00: get device descriptor
-	returns the lzma-ed json-encoded device descriptor
+The node address 0xFFFF is used for autodiscovery. A packet sent to it looks like described above. If the lower n device MAC bits (n is the MAC mask length) match the given MAC pattern, the device responds with 0xFF to tell the host that there is a matching device (otherwise it just remains silent). Depending on the physical layer used (e.g. RS485), this might be replaced by manually pulling the normally idle line to an active state. If the MAC address matches, the device takes the node address given in the discovery packet.

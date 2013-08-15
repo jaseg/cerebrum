@@ -26,13 +26,15 @@ parser.add_argument('-n', '--buildname', type=str, help='An optional name for th
 args = parser.parse_args()
 
 # Decode json device descriptor and device config and initialize build variables
-desc = json.JSONDecoder().decode('\n'.join(args.template.readlines()))
-device = json.JSONDecoder().decode('\n'.join(args.device.readlines()))
+print("Parsing config")
+desc = json.JSONDecoder().decode(args.template.read())
+print("Parsing device description")
+device = json.JSONDecoder().decode(args.device.read())
 st = datetime.datetime.utcnow().timetuple()
 builddate = str(datetime.datetime(st[0], st[1], st[2], st[3], st[4], st[5]))
 buildsource = 'stdin' if args.template.name is '-' else args.template.name
 print(builddate)
-print('Generating firmware from ', buildsource)
+print('Generating firmware from ', buildsource, "for", desc['type'])
 
 # Generate code and write generated build config
 # FIXME there are two different but similar things called "build config" here.

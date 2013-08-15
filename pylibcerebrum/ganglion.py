@@ -6,7 +6,6 @@
 #modify it under the terms of the GNU General Public License
 #version 3 as published by the Free Software Foundation.
 
-import serial
 import json
 import struct
 try:
@@ -14,12 +13,11 @@ try:
 except:
 	import pylzma as lzma
 import time
+import serial
 from pylibcerebrum.NotifyList import NotifyList
+from pylibcerebrum.timeout_exception import TimeoutException
 
 """Call RPC functions on serially connected devices over the Cerebrum protocol."""
-
-class TimeoutException(Exception):
-	pass
 
 class Ganglion(object):
 	"""Proxy class for calling remote methods on hardware connected through a serial port using the Cerebrum protocol"""
@@ -27,7 +25,7 @@ class Ganglion(object):
 	# NOTE: the device config is *not* the stuff from the config "dev" section but
 	#read from the device. It can also be found in that [devicename].config.json
 	#file created by the code generator
-	def __init__(self, device=None, baudrate=115200, jsonconfig=None, ser=None):
+	def __init__(self, node_id, jsonconfig=None, ser=None):
 		"""Ganglion constructor
 
 		Keyword arguments:
@@ -36,18 +34,10 @@ class Ganglion(object):
 		The other keyword arguments are for internal use only.
 
 		"""
-		# get a config
-		object.__setattr__(self, '_opened_ser', None) #This must be set here so in case of an error __del__ does not end in infinite recursion
-		if ser is None:
-			assert(jsonconfig is None)
-			s = serial.Serial(port=device, baudrate=baudrate, timeout=1)
-			#Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
-			s.setXonXoff(True)
-			s.setXonXoff(False)
-			s.setDTR(True)
-			s.setDTR(False)
-			object.__setattr__(self, '_opened_ser', s)
-			object.__setattr__(self, '_ser', s)
+		object.__setattr__(self, '_ser', ser)
+		object.__setattr__(self, 'node_id', node_id)
+		if not jsonconfig:
+			# get a config
 			i=0
 			while True:
 				try:
@@ -61,81 +51,62 @@ class Ganglion(object):
 				i += 1
 				if i > 20:
 					raise serial.serialutil.SerialException('Could not connect, giving up after 20 tries')
-		else:
-			assert(device is None)
-			object.__setattr__(self, '_ser', ser)
 		# populate the object
 		object.__setattr__(self, 'members', {})
 		for name, member in jsonconfig.get('members', {}).items():
-			self.members[name] = Ganglion(jsonconfig=member, ser=self._ser)
+			self.members[name] = Ganglion(node_id, jsonconfig=member, ser=self._ser)
 		object.__setattr__(self, 'properties', {})
 		for name, prop in jsonconfig.get('properties', {}).items():
 			self.properties[name] = (prop['id'], prop['fmt'], prop.get('access', 'rw'))
 		object.__setattr__(self, 'functions', {})
 		for name, func in jsonconfig.get('functions', {}).items():
 			def proxy_method(*args):
-				return self._callfunc(func["id"], fun.get("args", ""), args, func.get("returns", ""))
-			self.functions[name] = func
+				return self._callfunc(func["id"], func.get("args", ""), args, func.get("returns", ""))
+			self.functions[name] = proxy_method
 		object.__setattr__(self, 'type', jsonconfig.get('type', None))
 		object.__setattr__(self, 'config', { k: v for k,v in jsonconfig.items() if not k in ['members', 'properties', 'functions'] })
 	
-	def __del__(self):
-		self.close()
-	
-	def __exit__(self, exception_type, exception_val, trace):
-		self.close()
-
-	def close(self):
-		"""Close the serial port."""
-		if self._opened_ser:
-			self._opened_ser.close()
-
 	def __iter__(self):
 		"""Construct an iterator to iterate over *all* (direct or not) child nodes of this node."""
 		return GanglionIter(self)
 
-	def _my_ser_read(self, n):
-		"""Read n bytes from the serial device and raise a TimeoutException in case of a timeout."""
-		data = self._ser.read(n)
-		if len(data) != n:
-			raise TimeoutException('Read {} bytes trying to read {}'.format(len(data), n))
-		return data
-
 	def _read_config(self):
 		"""Fetch the device configuration descriptor from the device."""
-		self._ser.write(b'\\#\x00\x00\x00\x00')
-		(clen,) = struct.unpack(">H", self._my_ser_read(2))
-		cbytes = self._my_ser_read(clen)
-		#decide whether cbytes contains lzma or json depending on the first byte (which is used as a magic here)
-		if cbytes[0] is ord('#'):
-			return json.JSONDecoder().decode(str(lzma.decompress(cbytes[1:]), "utf-8"))
-		else:
-			return json.JSONDecoder().decode(str(cbytes, "utf-8"))
+		with self._ser as s:
+			s.write(b'\\#' + struct.pack(">H", self.node_id) + b'\x00\x00\x00\x00')
+			(clen,) = struct.unpack(">H", s.read(2))
+			cbytes = s.read(clen)
+			#decide whether cbytes contains lzma or json depending on the first byte (which is used as a magic here)
+			if cbytes[0] is ord('#'):
+				return json.JSONDecoder().decode(str(lzma.decompress(cbytes[1:]), "utf-8"))
+			else:
+				return json.JSONDecoder().decode(str(cbytes, "utf-8"))
 	
 	def _callfunc(self, fid, argsfmt, args, retfmt):
 		"""Call a function on the device by id, directly passing argument/return format parameters."""
 		# Make a list out of the arguments if they are none
 		if not (isinstance(args, tuple) or isinstance(args, list)):
 			args = [args]
-		# Send the encoded data
-		cmd = b'\\#' + struct.pack("<HH", fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args)
-		self._ser.write(cmd)
-		# payload length
-		(clen,) = struct.unpack(">H", self._my_ser_read(2))
-		# payload data
-		cbytes = self._my_ser_read(clen)
-		if clen != struct.calcsize(retfmt):
-			# CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
-			# FIXME raise an error here or let the whole operation just fail in the following struct.unpack?
-			raise AttributeError("Device response format problem: Length mismatch: {} != {}".format(clen, struct.calcsize(retfmt)))
-		rv = struct.unpack(retfmt, cbytes)
-		# Try to interpret the return value in a useful manner
-		if len(rv) == 0:
-			return None
-		elif len(rv) == 1:
-			return rv[0]
-		else:
-			return list(rv)
+		with self._ser as s:
+			# Send the encoded data
+			cmd = b'\\#' + struct.pack(">HHH", self.node_id, fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args)
+			s.write(cmd)
+			# payload length
+			(clen,) = struct.unpack(">H", s.read(2))
+			# payload data
+			cbytes = s.read(clen)
+			if clen != struct.calcsize(retfmt):
+				# CAUTION! This error is thrown not because the user supplied a wrong value but because the device answered in an unexpected manner.
+				# FIXME raise an error here or let the whole operation just fail in the following struct.unpack?
+				raise AttributeError("Device response format problem: Length mismatch: {} != {}".format(clen, struct.calcsize(retfmt)))
+			rv = struct.unpack(retfmt, cbytes)
+			# Try to interpret the return value in a useful manner
+			if len(rv) == 0:
+				return None
+			elif len(rv) == 1:
+				return rv[0]
+			else:
+				return list(rv)
 
 	def __dir__(self):
 		"""Get a list of all attributes of this object. This includes virtual Cerebrum stuff like members, properties and functions."""

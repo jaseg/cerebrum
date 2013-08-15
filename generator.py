@@ -7,10 +7,12 @@
 import subprocess
 import os.path
 import time
+import random
 from threading import Thread
 import struct
 from inspect import isfunction
 from mako.template import Template
+from mako import exceptions
 import binascii
 import json
 try:
@@ -19,7 +21,7 @@ except:
 	import pylzma as lzma
 import codecs
 import unittest
-"""Automatic Cerebrum c code generator"""
+"""Automatic Cerebrum C code generator"""
 
 # Code templates. Actually, this is the only device-dependent place in this whole
 # file, and actually only a very few lines are device-dependent.
@@ -113,16 +115,17 @@ config_c_template = """\
 #endif
 
 unsigned int auto_config_descriptor_length = ${desc_len};
-const char auto_config_descriptor[] PROGMEM = {${desc}};
+char const auto_config_descriptor[] PROGMEM = {${desc}};
 """
 
 #FIXME possibly make a class out of this one
 #FIXME I think the target parameter is not used anywhere. Remove?
-def generate(desc, device, build_path, builddate, target = 'all'):
+def generate(desc, device, build_path, builddate, target = 'all', node_id=None):
 	members = desc["members"]
 	seqnum = 23 #module number (only used during build time to generate unique names)
 	current_id = 0
 	desc["builddate"] = str(builddate)
+	node_id = node_id or random.randint(0, 2**64-2)
 	autocode = Template(autocode_header).render_unicode(version=desc["version"], builddate=builddate)
 	init_functions = []
 	loop_functions = []
@@ -173,10 +176,11 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 				`array` can be used to generated accessors for module variables that are arrays.
 
 				`callbacks` can be a tuple of one or two values. Each value corresponds to one callback. If the tuple contains
-				only one value, no setter will be generated and the variable will be marked read-only. A value of `None` prompts
-				the generation of the "default" accessor function. A value of `True` prompts the registration of an accessor
+				only one value, no setter will be generated and the variable will be marked read-only. A value of 0 prompts
+				the generation of the "default" accessor function. A value of 1 prompts the registration of an accessor
 				function of the form `callback_(get|set)_${modulevar(name)}` whose argument is stored in the module variable
-				buffer itself and which you must implement yourself. You may also specify a tuple of the form `(cbname, buf, buflen)`
+				buffer itself and which you must implement yourself. A value of 2 does the same storing the data in the global
+				argument buffer. You may also specify a tuple of the form `(cbname, buf, buflen)`
 				where `cbname` is the name of your callback and `buf` and `buflen` are the argument buffer and argument buffer length,
 				respectively.
 			"""
@@ -243,18 +247,26 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 			functions[name] = func
 			return cbname
 
-		#Flesh out the module template!
-		tp = Template(filename=typepath)
-		autocode += tp.render_unicode(
-				init_function=init_function,
-				loop_function=loop_function,
-				modulevar=modulevar,
-				setter=lambda x: 'callback_set_'+modulevar(x),
-				getter=lambda x: 'callback_get_'+modulevar(x),
-				module_callback=module_callback,
-				register_callback=register_callback,
-				member=member,
-				device=device)
+		try:
+			#Flesh out the module template!
+			tp = Template(filename=typepath)
+			autocode += tp.render_unicode(
+					init_function=init_function,
+					loop_function=loop_function,
+					modulevar=modulevar,
+					setter=lambda x: 'callback_set_'+modulevar(x),
+					getter=lambda x: 'callback_get_'+modulevar(x),
+					module_callback=module_callback,
+					register_callback=register_callback,
+					member=member,
+					device=device)
+		except:
+			print('-----[\x1b[91;1mException occurred while rendering module {}\x1b[0m]-----'.format(mname))
+			print('Current module definition:')
+			print(json.dumps(member, indent=4, separators=(',', ': ')))
+			print(exceptions.text_error_template().render().strip())
+			print('-----[end]-----')
+			raise
 
 		#Save some space in the build config (that later gets burned into the µC's really small flash!)
 		if functions:
@@ -281,7 +293,11 @@ def generate(desc, device, build_path, builddate, target = 'all'):
 	make_env['MCU'] = device.get('mcu')
 	make_env['CLOCK'] = str(device.get('clock'))
 	make_env['CEREBRUM_BAUDRATE'] = str(device.get('cerebrum_baudrate'))
-	subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, 'clean', target], env=make_env)
+	make_env['CONFIG_MAC'] = str(node_id) #0xFFFF,FFFF,FFFF,FFFF is reserved as discovery address
+	subprocess.check_call(['/usr/bin/env', 'make', '--no-print-directory', '-C', build_path, target], env=make_env)
+
+	desc['node_id'] = node_id
+	print('\x1b[92;1mNode ID:\x1b[0m {:#016x}'.format(node_id))
 
 	return desc
 
@@ -300,19 +316,12 @@ class TestBuild(unittest.TestCase):
 		pass
 
 	def test_basic_build(self):
-		generate({'members': {}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17')
-
-def compareJSON(bytesa, bytesb):
-	jsona = json.JSONDecoder().decode(str(bytesa, "ASCII"))
-	normstra = bytes(json.JSONEncoder(separators=(',',':')).encode(jsona), 'ASCII')
-	jsonb = json.JSONDecoder().decode(str(bytesb, "ASCII"))
-	normstrb = bytes(json.JSONEncoder(separators=(',',':')).encode(jsonb), 'ASCII')
-	return normstra == normstrb
+		generate({'members': {}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', node_id=0x2342)
 
 class TestCommStuff(unittest.TestCase):
 
 	def setUp(self):
-		generate({'members': {'test': {'type': 'test'}}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17')
+		generate({'members': {'test': {'type': 'test'}}, 'version': 0.17}, {'mcu': 'test'}, 'test', '2012-05-23 23:42:17', node_id=0x2342)
 
 	def new_test_process(self):
 		#spawn a new communication test process
@@ -333,7 +342,7 @@ class TestCommStuff(unittest.TestCase):
 	def test_config_descriptor(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x00\x00\x00')
+		stdin.write(b'\\#\x23\x42\x00\x00\x00\x00')
 		stdin.flush()
 		stdin.close()
 
@@ -349,7 +358,7 @@ class TestCommStuff(unittest.TestCase):
 	def test_multipart_call(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+		stdin.write(b'\\#\x23\x42\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
 		stdin.flush()
 		stdin.close()
 		
@@ -361,7 +370,7 @@ class TestCommStuff(unittest.TestCase):
 		"""Test whether the test function actually fails when given invalid data."""
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA')
+		stdin.write(b'\\#\x23\x42\x00\x01\x00\x41AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAA')
 		stdin.flush()
 		stdin.close()
 		
@@ -372,8 +381,8 @@ class TestCommStuff(unittest.TestCase):
 	def test_multipart_call_long_args(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*257)
-		stdin.write(b'\\#\x00\x06\x00\x00')
+		stdin.write(b'\\#\x23\x42\x00\x05\x01\x01'+b'A'*257)
+		stdin.write(b'\\#\x23\x42\x00\x06\x00\x00')
 		stdin.flush()
 		stdin.close()
 		
@@ -386,7 +395,7 @@ class TestCommStuff(unittest.TestCase):
 		"""Test whether the test function actually fails when given invalid data."""
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128)
+		stdin.write(b'\\#\x23\x42\x00\x05\x01\x01'+b'A'*128+b'B'+b'A'*128)
 		stdin.flush()
 		stdin.close()
 		
@@ -397,8 +406,8 @@ class TestCommStuff(unittest.TestCase):
 	def test_attribute_accessors_multipart(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x03\x01\x01'+b'A'*32+b'B'*32+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
-		stdin.write(b'\\#\x00\x04\x00\x00') # call check_test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x03\x01\x01'+b'A'*32+b'B'*32+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x04\x00\x00') # call check_test_buffer
 		stdin.flush()
 		stdin.close()
 		
@@ -409,8 +418,8 @@ class TestCommStuff(unittest.TestCase):
 	def test_meta_attribute_accessors_multipart(self):
 		(p, stdin, stdout, t) = self.new_test_process();
 
-		stdin.write(b'\\#\x00\x03\x01\x01'+b'A'*33+b'B'*31+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
-		stdin.write(b'\\#\x00\x04\x00\x00') # call check_test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x03\x01\x01'+b'A'*33+b'B'*31+b'C'*32+b'D'*32+b'E'*32+b'F'*32+b'G'*32+b'H'*32+b'I') # write some characters to test_buffer
+		stdin.write(b'\\#\x23\x42\x00\x04\x00\x00') # call check_test_buffer
 		stdin.flush()
 		stdin.close()
 		

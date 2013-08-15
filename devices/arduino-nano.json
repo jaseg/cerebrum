@@ -1,8 +1,8 @@
 {
 	"type": "avr",
 	"programmer": "arduino",
-	"programmer_baudrate": 115200,
-    "cerebrum_baudrate": 115200,
+	"programmer_baudrate": 57600,
+    "cerebrum_baudrate": 57600,
 	"mcu": "atmega328p",
 	"clock": 16000000,
 	"pwm": {
@@ -14,7 +14,7 @@
 		"D3": [2, "B", "TCCR2A |= (1<<COM2B1) | (1<<WGM00) | (1<<WGM01); TCCR2B |= (1<<CS20);", "TCCR2A &= ~(1<<COM2B1);"]
 	},
 	"adc": {
-		"prescaler_bits": "(1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0)",
+		"prescaler_bits": "ADPS2 | ADPS1 | ADPS0",
 		"C0": 0,
 		"C1": 1,
 		"C2": 2,

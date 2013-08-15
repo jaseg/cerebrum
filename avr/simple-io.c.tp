@@ -9,9 +9,9 @@
 #include <avr/io.h>
 
 void ${init_function()} (void){
-	% if device["adc"].get(member["port"]+str(member["pin"])):
-		ADMUX |= REFS0 | ADLAR;
-		ADCSRA |= ADEN | ${device["adc"]["prescaler_bits"]};
+	% if device["adc"].get(member["port"]+str(member["pin"])) is not None:
+		ADMUX |= (1<<REFS0) | (1<<ADLAR);
+		ADCSRA |= (1<<ADEN) | ${device["adc"]["prescaler_bits"]};
 	% endif
     % if member.get("mode", None) == "pwm":
         DDR${member["port"]} |= (1<<${member["pin"]});
@@ -56,7 +56,7 @@ void ${getter("direction")} (const comm_callback_descriptor* cb, void* argbuf_en
 	uart_putc(!!(DDR${member["port"]} & (1<<${member["pin"]})));
 }
 
-% if device["adc"].get(member["port"]+str(member["pin"])):
+% if device["adc"].get(member["port"]+str(member["pin"])) is not None:
 //${modulevar("analog", None, "B", callbacks=(2, None))}
 void ${getter("analog")} (const comm_callback_descriptor* cb, void* argbuf_end){
 	uart_putc(0x00);
@@ -70,7 +70,8 @@ void ${getter("analog")} (const comm_callback_descriptor* cb, void* argbuf_end){
 	ADMUX |= ${device["adc"].get(member["port"]+str(member["pin"]))}&0x1F;
 	ADCSRB |= ${device["adc"].get(member["port"]+str(member["pin"]))}&0x20>>2;
 #endif
-	while(!(ADCSRA&(1<<ADIF))); //wait for conversion to finish
+	ADCSRA |= (1<<ADSC);
+	while(!(ADCSRA&(1<<ADSC))); //wait for conversion to finish
 	uart_putc(ADCH);
 	ADCSRA |= (1<<ADIF); //reset the interrupt flag
 }

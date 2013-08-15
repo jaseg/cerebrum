@@ -1,0 +1,37 @@
+{
+	"type": "avr",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+        "schnurrechts": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  7
+        },
+        "schnurmitte": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  0
+        },
+        "schnurlinks": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  1
+        },
+		"schlundgruen": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 3
+		},
+		"schlundblau": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 5
+		},
+        "schlundrot": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  0
+        }
+	}
+}

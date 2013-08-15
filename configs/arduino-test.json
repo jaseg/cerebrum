@@ -3,10 +3,105 @@
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
 	"members": {
-		"led": {
+		"analog0": {
 			"type": "simple-io",
-			"port": "B",
+			"port": "C",
+			"pin": 0
+		},
+		"analog1": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 1
+		},
+		"analog2": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 2
+		},
+		"analog3": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 3
+		},
+		"analog4": {
+			"type": "simple-io",
+			"port": "C",
+			"pin": 4
+		},
+		"analog5": {
+			"type": "simple-io",
+			"port": "C",
 			"pin": 5
-		}
+		},
+        "digital0": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  0
+        },
+        "digital1": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  1
+        },
+        "digital2": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  2
+        },
+        "digital3": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  3
+        },
+        "digital4": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  4
+        },
+        "digital5": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  5
+        },
+        "digital6": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  6
+        },
+        "digital7": {
+            "type": "simple-io",
+            "port": "D",
+            "pin":  7
+        },
+        "digital8": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  0
+        },
+        "digital9": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  1
+        },
+        "digital10": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  2
+        },
+        "digital11": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  3
+        },
+        "digital12": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  4
+        },
+        "digital13": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  5
+        }
 	}
 }

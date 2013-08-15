@@ -8,7 +8,7 @@
 		},
 		"ws2801": {
 			"type": "ws2801-chain",
-			"length": 516
+			"length": 160
 		}
 	}
 }

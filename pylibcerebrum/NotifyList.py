@@ -2,7 +2,7 @@
 def callback_method(func):
 	def notify(self,*args,**kwargs):
 		rv = func(self,*args,**kwargs)
-		for callback in self._callbacks:
+		for callback in self.callbacks:
 			callback(self)
 		return rv
 	return notify
@@ -26,16 +26,5 @@ class NotifyList(list):
 
 	def __init__(self,*args,callbacks=[]):
 		list.__init__(self,*args)
-		self._callbacks = callbacks
-
-	def register_callback(self,cb):
-		self._callbacks.append(cb)
-
-	def unregister_callback(self,cbr):
-		for i,cb in enumerate(self._callbacks):
-			if cbr is cb:
-				del self._callbacks[i]
-				return cb
-		else:
-			return None
+		self.callbacks = callbacks
 

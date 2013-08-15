@@ -1,0 +1,37 @@
+{
+	"type": "avrusb",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"members": {
+		"PB4": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 4
+		},
+		"PB5": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 5
+		},
+		"PB6": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 6
+		},
+		"PB7": {
+			"type": "simple-io",
+			"port": "B",
+			"pin": 7
+		},
+		"rxled": {
+			"type": "simple-io",
+			"port": "D",
+			"pin": 4
+		},
+		"txled": {
+			"type": "simple-io",
+			"port": "D",
+			"pin": 5
+		}
+	}
+}
