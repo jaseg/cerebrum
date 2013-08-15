@@ -10,32 +10,38 @@
 		"linksmitte": {
 			"type": "simple-io",
 			"port": "E",
-			"pin": 3
+			"pin": 3,
+            "mode": "pwm"
 		},
 		"linksoben": {
 			"type": "simple-io",
 			"port": "E",
-			"pin": 4
+			"pin": 4,
+            "mode": "pwm"
 		},
 		"linksunten": {
 			"type": "simple-io",
 			"port": "E",
-			"pin": 5
+			"pin": 5,
+            "mode": "pwm"
 		},
 		"mitteunten": {
 			"type": "simple-io",
 			"port": "H",
-			"pin": 4
+			"pin": 4,
+            "mode": "pwm"
 		},
 		"meterio3": {
 			"type": "simple-io",
 			"port": "H",
-			"pin": 3
+			"pin": 3,
+            "mode": "pwm"
 		},
 		"meterio5": {
 			"type": "simple-io",
 			"port": "G",
-			"pin": 5
+			"pin": 5,
+            "mode": "pwm"
 		}
 	}
 }
