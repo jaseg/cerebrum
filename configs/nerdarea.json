@@ -12,6 +12,46 @@
 			"type": "led_matrix",
 			"port": "K",
 			"inverted": true
+		},
+		"PH0": {
+			"type": "simple-io",
+			"port": "H",
+			"pin": "0"
+		},
+		"PH1": {
+			"type": "simple-io",
+			"port": "H",
+			"pin": "1"
+		},
+		"PJ0": {
+			"type": "simple-io",
+			"port": "J",
+			"pin": "0"
+		},
+		"PJ1": {
+			"type": "simple-io",
+			"port": "J",
+			"pin": "1"
+		},
+		"PD0": {
+			"type": "simple-io",
+			"port": "D",
+			"pin": "0"
+		},
+		"PD1": {
+			"type": "simple-io",
+			"port": "D",
+			"pin": "1"
+		},
+		"PD2": {
+			"type": "simple-io",
+			"port": "D",
+			"pin": "2"
+		},
+		"PD3": {
+			"type": "simple-io",
+			"port": "D",
+			"pin": "3"
 		}
 	}
 }

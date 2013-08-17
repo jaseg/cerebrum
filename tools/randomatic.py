@@ -18,7 +18,7 @@ print('Initializing device')
 print(dir(g))
 
 led_matrices = [ m for m in g if m.type == 'led_matrix' ]
-pwms         = [ m for m in g if m.type == 'simple-io' and m.config['mode'] == 'pwm' ]
+pwms         = [ m for m in g if m.type == 'simple-io' and m.config.get('mode') == 'pwm' ]
 
 lamp_rand_data = [ [ [ random.randint(0, 1) for _ in range(28) ] for _ in led_matrices ] for _ in range(128) ]
 pwm_rand_data  = [ x for _ in range(8) for x in [[ random.randint(0, 255) for _ in pwms ]]*16 ]
