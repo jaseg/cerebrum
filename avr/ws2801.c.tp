@@ -14,7 +14,7 @@
 
 ${modulevar("buffer", "uint8_t", "{}B".format(member["length"]*3), array=member["length"]*3)};
 // Segments
-% for [name, start, len] in member["segments"]:
+% for [name, start, len] in member.get("segments", []):
 //CAUTION Despite this being a comment, the module variable registration template call is still handled.
 //${modulevar("buffer_"+name, None, "{}B".format(len*3),
     callbacks=(("generic_getter_callback", modulevar("buffer")+'+'+str(start*3), len*3),
@@ -208,7 +208,7 @@ void ${getter("pattern")} (const comm_callback_descriptor* cb, void* argbuf_end)
 }
 
 ${modulevar("offset", "int16_t", "h")} = 0;
-${modulevar("speed", "int8_t", "b")} = 2;
+${modulevar("speed", "int8_t", "b")} = ${member.get("speed", 2)};
 
 void ${loop_function()}(void){
 	for(uint16_t i=0; i<${member["length"]}; i++){
