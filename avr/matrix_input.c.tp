@@ -1,0 +1,47 @@
+
+#include <util/delay.h>
+
+${modulevar("state", "int8_t", "{}B".format(member["rows"]*member["cols"]), array=member["rows"]*member["cols"])};
+
+void ${init_function()} (void){
+	PORT${member["miso"][0]} |= 1<<${member["miso"][1]};
+	DDR${member["mosi"][0]} |= 1<<${member["mosi"][1]};
+	DDR${member["vcc"][0]} |= 1<<${member["vcc"][1]};
+	PORT${member["vcc"][0]} |= 1<<${member["vcc"][1]};
+	DDR${member["gnd"][0]} |= 1<<${member["gnd"][1]};
+	DDR${member["iclk"][0]} |= 1<<${member["iclk"][1]};
+	DDR${member["oclk"][0]} |= 1<<${member["oclk"][1]};
+	DDR${member["strobe"][0]} |= 1<<${member["strobe"][1]};
+}
+
+void ${loop_function()} (void){
+    static uint8_t row = 0;
+
+	for(uint8_t i=0; i<${member["cols"]}; i++){
+		${modulevar("state")}[row*${member["cols"]}+i] = !!(PIN${member["miso"][0]} & (1<<${member["miso"][1]}));
+
+		PORT${member["iclk"][0]} |= 1<<${member["iclk"][1]};
+		_delay_us(5);
+		PORT${member["iclk"][0]} &= ~(1<<${member["iclk"][1]});
+		_delay_us(5);
+	}
+	if(row == 0){
+		PORT${member["mosi"][0]} &= ~(1<<${member["mosi"][1]});
+	}else{
+		PORT${member["mosi"][0]} |= 1<<${member["mosi"][1]};
+	}
+		
+	PORT${member["strobe"][0]} |= (1<<${member["strobe"][1]});
+	PORT${member["iclk"][0]} |= 1<<${member["iclk"][1]};
+	PORT${member["oclk"][0]} |= 1<<${member["oclk"][1]};
+	_delay_us(5);
+	PORT${member["strobe"][0]} &= ~(1<<${member["strobe"][1]});
+	PORT${member["iclk"][0]} &= ~(1<<${member["iclk"][1]});
+	PORT${member["oclk"][0]} &= ~(1<<${member["oclk"][1]});
+
+	row++;
+	if(row >= ${member["rows"]}){
+		row = 0;
+	}
+}
+
