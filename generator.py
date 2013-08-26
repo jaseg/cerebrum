@@ -120,11 +120,13 @@ char const auto_config_descriptor[] PROGMEM = {${desc}};
 
 #FIXME possibly make a class out of this one
 #FIXME I think the target parameter is not used anywhere. Remove?
-def generate(desc, device, build_path, builddate, target = 'all', node_id=None):
+def generate(desc, device, build_path, builddate, buildname=None, target = 'all', node_id=None):
 	members = desc["members"]
 	seqnum = 23 #module number (only used during build time to generate unique names)
 	current_id = 0
-	desc["builddate"] = str(builddate)
+	desc['builddate'] = str(builddate)
+	if buildname:
+		desc['name'] = buildname
 	node_id = node_id or random.randint(0, 2**64-2)
 	autocode = Template(autocode_header).render_unicode(version=desc["version"], builddate=builddate)
 	init_functions = []

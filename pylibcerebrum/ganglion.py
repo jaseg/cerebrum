@@ -25,7 +25,7 @@ class Ganglion(object):
 	# NOTE: the device config is *not* the stuff from the config "dev" section but
 	#read from the device. It can also be found in that [devicename].config.json
 	#file created by the code generator
-	def __init__(self, node_id, jsonconfig=None, ser=None):
+	def __init__(self, node_id, jsonconfig=None, ser=None, name=''):
 		"""Ganglion constructor
 
 		Keyword arguments:
@@ -36,6 +36,7 @@ class Ganglion(object):
 		"""
 		object.__setattr__(self, '_ser', ser)
 		object.__setattr__(self, 'node_id', node_id)
+		object.__setattr__(self, 'name', name)
 		if not jsonconfig:
 			# get a config
 			i=0
@@ -54,7 +55,7 @@ class Ganglion(object):
 		# populate the object
 		object.__setattr__(self, 'members', {})
 		for name, member in jsonconfig.get('members', {}).items():
-			self.members[name] = Ganglion(node_id, jsonconfig=member, ser=self._ser)
+			self.members[name] = Ganglion(node_id, jsonconfig=member, ser=self._ser, name=self.name+'/'+name)
 		object.__setattr__(self, 'properties', {})
 		for name, prop in jsonconfig.get('properties', {}).items():
 			self.properties[name] = (prop['id'], prop['fmt'], prop.get('access', 'rw'))
