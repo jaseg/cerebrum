@@ -10,7 +10,7 @@ from pylibcerebrum.serial_mux import SerialMux
 
 parser = argparse.ArgumentParser(description='Make things flicker.')
 parser.add_argument('port', type=str, help='The TTY the target device is connected to')
-parser.add_argument('baudrate', type=str, default=115200, help='The TTYs baud rate')
+parser.add_argument('-b', '--baudrate', type=str, default=115200, help='The TTYs baud rate')
 parser.add_argument('-p', '--publish', type=str, help='Publish connected switches and inputs to the given JSONRPC server')
 args = parser.parse_args()
 
