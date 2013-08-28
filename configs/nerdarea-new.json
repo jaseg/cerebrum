@@ -3,6 +3,12 @@
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
 	"members": {
+		"the_switch": {
+			"type": "simple-io",
+			"port": "A",
+			"pin": "0",
+			"state": "high"
+		},
 		"panelsecke": {
 			"type": "led_matrix",
 			"port": "F",
