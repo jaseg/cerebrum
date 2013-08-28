@@ -19,6 +19,9 @@ void ${init_function()} (void){
     % elif member.get("mode", None) == "output":
         DDR${member["port"]} |= (1<<${member["pin"]});
     % endif
+	% if member.get("state", None) == "high":
+		PORT${member["port"]} |= (1<<${member["pin"]});
+	% endif
 }
 
 //${modulevar("state", None, "B", callbacks=(2, 2))}
