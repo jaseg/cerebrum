@@ -1,0 +1,42 @@
+/*
+ Copyright (C) 2013 jaseg <s@jaseg.de>
+
+ This program is free software; you can redistribute it and/or
+ modify it under the terms of the GNU General Public License
+ version 3 as published by the Free Software Foundation.
+ */
+
+#include <avr/io.h>
+#include "keypad.h"
+
+void ${init_function()} (void){
+}
+
+${modulevar("states", "uint8_t", "{}B".format(member["row_count"]*member["col_count"]), array=member["row_count"]*member["col_count"])};
+
+void ${loop_function()} (void){
+    static uint8_t row = 0;
+    static uint8_t states[${member["row_count"]}][${member["col_count"]}];
+
+    for(uint8_t i=0; i<${member["col_count"]}; i++){
+		POKE_IN_CLK();
+		uint8_t* state = states + (row*member["col_count"] + i);
+		if(*state > 1){
+			*state--;
+		}else if(state < -1){
+			*state++;
+		}else{
+			*state = CURRENT_STATE ? ${member["debounce_interval"]}	: -${member["debounce_interval"]};
+		}
+    }
+
+	if(row >= ${member["row_count"]}){
+		row = 0;
+		SET_DOUT_HIGH();
+	}else{
+		SET_DOUT_LOW();
+	}
+	POKE_OUT_CLK();
+	row++;
+}
+
