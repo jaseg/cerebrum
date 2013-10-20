@@ -3,13 +3,22 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import subprocess
+import random
+import os
 
 play_process = None
+audiofiles = []
 
 def start_playing():
 	global play_process
+	global audiofiles
 	if play_process is None:
-		play_process = subprocess.Popen(['mplayer', '/var/switch/Smile Song.mp3'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		#audiofiles = ['/var/switch/Smile Song.mp3'] * 2 + ['/var/switch/rick astley never gonna give you up.mp3'] + ['/var/switch/MitchiriNeko March.mp3'] * 7 + ['/var/switch/nyan-cat.mp3'] * 3 + ['/var/switch/Imperial_March.mp3'] * 3 + ['/var/switch/Drogenlied.mp3'] * 2
+		#audiofile = random.choice(audiofiles)
+		if len(audiofiles) < 1: 
+			audiofiles = os.listdir('/var/switch')
+		audiofile = '/var/switch/%s' % audiofiles.pop(random.randrange(len(audiofiles)))
+		play_process = subprocess.Popen(['mplayer', '-really-quiet', audiofile])
 
 def stop_playing():
 	global play_process
