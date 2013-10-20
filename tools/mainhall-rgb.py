@@ -40,10 +40,16 @@ def inc_color(r,g,b):
 		v['red']	= xform(v['red'], r)
 		v['green']	= xform(v['green'], g)
 		v['blue']	= xform(v['blue'], b)
-	requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [state], 'id': 0}))
+	try:
+		requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [state], 'id': 0}))
+	except e:
+		print('Cannot set DMX color:', e)
 
 def sendstate(schnur, state):
-	requests.post(CBEAM, data=json.dumps({'method': 'barschnur', 'params': [schnur, state], 'id': 0}))
+	try:
+		requests.post(CBEAM, data=json.dumps({'method': 'barschnur', 'params': [schnur, state], 'id': 0}))
+	except e:
+		print('Cannot send event to c-beam:', e)
 
 oldstate = None
 sr, sg, sb = False, False, False

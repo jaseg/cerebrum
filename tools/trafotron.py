@@ -7,6 +7,7 @@ import requests
 from pylibcerebrum.serial_mux import SerialMux
 
 CBEAM			= 'http://10.0.1.27:4254/rpc/'
+HYPERBLAST		= 'http://10.0.1.23:1337/'
 PORT			= '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_7523230313535161C072-if00'
 BAUDRATE		= 115200
 AVG_SAMPLES		= 128
@@ -28,10 +29,22 @@ def sendstate(value):
 	print('SENDING', value)
 	requests.post(CBEAM, data=json.dumps({'method': 'trafotron', 'params': [value], 'id': 0}))
 
+# Set Arduino digital pin 2 to output
+g.digital2.state = 1
 oldval = -2*SEND_THRESHOLD
+oldbarstate = None
+newbarstate = None
 while True:
 	val = sum([ g.analog0.analog for i in range(AVG_SAMPLES)])/AVG_SAMPLES
-	if(abs(val-oldval) > SEND_THRESHOLD):
+	if abs(val-oldval) > SEND_THRESHOLD:
 		oldval = val
 		sendstate(int(val))
+	if g.digital2.state:
+		newbarstate = 'closed'
+	else:
+		newbarstate = 'open'
+	if newbarstate != oldbarstate:
+		requests.post(CBEAM, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		requests.post(HYPERBLAST, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		oldbarstate = newbarstate
 
