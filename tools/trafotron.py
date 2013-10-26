@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+from threading import Thread
 import copy
 import json
 import requests
@@ -63,17 +64,17 @@ def sendstate(value):
 	print('SENDING', value)
 	requests.post(CBEAM, data=json.dumps({'method': 'trafotron', 'params': [value], 'id': 0}))
 
-# Enable pull-up on Arduino analog pin 1
-g.analog1.state = 1
+# Enable pull-up on Arduino analog pin 4
+g.analog4.state = 1
 oldval = -2*SEND_THRESHOLD
 oldbarstate = None
 newbarstate = None
 while True:
-	val = sum([ g.analog0.analog for i in range(AVG_SAMPLES)])/AVG_SAMPLES
+	val = sum([ g.analog5.analog for i in range(AVG_SAMPLES)])/AVG_SAMPLES
 	if abs(val-oldval) > SEND_THRESHOLD:
 		oldval = val
 		sendstate(int(val))
-	if g.analog1.state:
+	if g.analog4.state:
 		newbarstate = 'closed'
 	else:
 		newbarstate = 'open'
@@ -81,9 +82,7 @@ while True:
 		oldbarstate = newbarstate
 
 		#comm with animation thread
-		global barstatus
-		barstatus = status
-		global lastchange
+		barstatus = newbarstate
 		lastchange = time.time()
 
 		requests.post(HYPERBLAST, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
