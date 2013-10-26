@@ -5,9 +5,17 @@ import json
 import subprocess
 import random
 import os
+import time
 
 play_process = None
 audiofiles = []
+audiofiles_timestamp = 0
+
+def load_audiofiles():
+	global audiofiles, audiofiles_timestamp
+	if len(audiofiles) < 1 or time.time()-audiofiles_timestamp > 60: 
+		audiofiles = os.listdir('/var/switch')
+		audiofiles_timestamp = time.time()
 
 def start_playing(filename=None):
 	global play_process
@@ -15,9 +23,8 @@ def start_playing(filename=None):
 	if play_process is None:
 		#audiofiles = ['/var/switch/Smile Song.mp3'] * 2 + ['/var/switch/rick astley never gonna give you up.mp3'] + ['/var/switch/MitchiriNeko March.mp3'] * 7 + ['/var/switch/nyan-cat.mp3'] * 3 + ['/var/switch/Imperial_March.mp3'] * 3 + ['/var/switch/Drogenlied.mp3'] * 2
 		#audiofile = random.choice(audiofiles)
+		load_audiofiles()
 		if filename is None:
-			if len(audiofiles) < 1: 
-				audiofiles = os.listdir('/var/switch')
 			filename = audiofiles.pop(random.randrange(len(audiofiles)))
 		audiofile = '/var/switch/%s' % filename
 		play_process = subprocess.Popen(['mplayer', '-really-quiet', audiofile])
@@ -53,7 +60,8 @@ class SwitchHandler(BaseHTTPRequestHandler):
 		elif method == 'stop_playing':
 			stop_playing()
 		elif method == 'ls':
-			self.wfile.write(json.dumps(audiofiles))
+			load_audiofiles()
+			self.wfile.write(bytes(json.dumps(audiofiles)+'\n', 'UTF-8'))
 			self.wfile.close()
 
 if __name__ == '__main__':
