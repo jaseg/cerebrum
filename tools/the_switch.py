@@ -9,15 +9,17 @@ import os
 play_process = None
 audiofiles = []
 
-def start_playing():
+def start_playing(filename=None):
 	global play_process
 	global audiofiles
 	if play_process is None:
 		#audiofiles = ['/var/switch/Smile Song.mp3'] * 2 + ['/var/switch/rick astley never gonna give you up.mp3'] + ['/var/switch/MitchiriNeko March.mp3'] * 7 + ['/var/switch/nyan-cat.mp3'] * 3 + ['/var/switch/Imperial_March.mp3'] * 3 + ['/var/switch/Drogenlied.mp3'] * 2
 		#audiofile = random.choice(audiofiles)
-		if len(audiofiles) < 1: 
-			audiofiles = os.listdir('/var/switch')
-		audiofile = '/var/switch/%s' % audiofiles.pop(random.randrange(len(audiofiles)))
+		if filename is None:
+			if len(audiofiles) < 1: 
+				audiofiles = os.listdir('/var/switch')
+			filename = audiofiles.pop(random.randrange(len(audiofiles)))
+		audiofile = '/var/switch/%s' % filename
 		play_process = subprocess.Popen(['mplayer', '-really-quiet', audiofile])
 
 def stop_playing():
@@ -43,7 +45,11 @@ class SwitchHandler(BaseHTTPRequestHandler):
 				else:
 					stop_playing()
 		elif method == 'start_playing':
-			start_playing()
+			params = data.get('params')
+			if len(params) == 1:
+				start_playing(params[0])
+			else:
+				start_playing()
 		elif method == 'stop_playing':
 			stop_playing()
 		elif method == 'ls':
@@ -51,6 +57,6 @@ class SwitchHandler(BaseHTTPRequestHandler):
 			self.wfile.close()
 
 if __name__ == '__main__':
-	HOST, PORT = '127.0.0.1', 1337
+	HOST, PORT = '', 1337
 	server = HTTPServer((HOST, PORT), SwitchHandler)
 	server.serve_forever()
