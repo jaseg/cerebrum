@@ -7,7 +7,7 @@ import requests
 import threading
 from pylibcerebrum.serial_mux import SerialMux
 
-CBEAM			= 'http://10.0.1.27:4254/rpc/'
+CBEAM			= 'http://c-beam.cbrp3.c-base.org/rpc/'
 PORT			= '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_64938333932351806231-if00'
 BAUDRATE		= 115200
 STALE_THRESHOLD = 10.0

@@ -7,7 +7,7 @@ import requests
 from pylibcerebrum.serial_mux import SerialMux
 
 BASE_URI	= 'http://10.0.1.43/dmxacl/json/'
-CBEAM		= 'http://10.0.1.27:4254/rpc/'
+CBEAM		= 'http://c-beam.cbrp3.c-base.org/rpc/'
 PORT		= '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A700fmkX-if00-port0'
 BAUDRATE	= 57600
 GAMMA		= 2.5
