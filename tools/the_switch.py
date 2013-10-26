@@ -28,6 +28,7 @@ def stop_playing():
 
 class SwitchHandler(BaseHTTPRequestHandler):
 	def do_POST(self):
+		global audiofiles
 		self.send_response(200)
 		self.end_headers()
 		postlen = int(self.headers['Content-Length'])
@@ -41,6 +42,13 @@ class SwitchHandler(BaseHTTPRequestHandler):
 					start_playing()
 				else:
 					stop_playing()
+		elif method == 'start_playing':
+			start_playing()
+		elif method == 'stop_playing':
+			stop_playing()
+		elif method == 'ls':
+			self.wfile.write(json.dumps(audiofiles))
+			self.wfile.close()
 
 if __name__ == '__main__':
 	HOST, PORT = '127.0.0.1', 1337
