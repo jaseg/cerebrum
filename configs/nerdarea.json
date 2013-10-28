@@ -2,7 +2,15 @@
 	"type": "avr",
 	"version": 23,
 	"url": "http://jaseg.github.com/cerebrum",
+	"name": "nerdeingang",
 	"members": {
+		"the_switch": {
+			"type": "simple-io",
+			"port": "A",
+			"pin": "0",
+			"state": "high",
+			"mode": "input"
+		},
 		"panelsecke": {
 			"type": "led_matrix",
 			"port": "F",
@@ -13,45 +21,51 @@
 			"port": "K",
 			"inverted": true
 		},
-		"PH0": {
-			"type": "simple-io",
-			"port": "H",
-			"pin": "0"
-		},
-		"PH1": {
-			"type": "simple-io",
-			"port": "H",
-			"pin": "1"
-		},
-		"PJ0": {
-			"type": "simple-io",
-			"port": "J",
-			"pin": "0"
-		},
-		"PJ1": {
-			"type": "simple-io",
-			"port": "J",
-			"pin": "1"
-		},
-		"PD0": {
-			"type": "simple-io",
-			"port": "D",
-			"pin": "0"
-		},
-		"PD1": {
-			"type": "simple-io",
-			"port": "D",
-			"pin": "1"
-		},
-		"PD2": {
-			"type": "simple-io",
-			"port": "D",
-			"pin": "2"
-		},
-		"PD3": {
-			"type": "simple-io",
-			"port": "D",
-			"pin": "3"
+		"schaltergang": {
+			"type": "matrix_input",
+			"mosi":   "J0",
+			"oclk":   "H1",
+			"iclk":   "D3",
+			"strobe": "H0",
+			"miso":   "J1",
+			"vcc":    "D0",
+			"gnd":    "D1",
+			"cols": 8,
+			"rows": 8,
+			"mapping": [
+				[[30, 14],3,2,0,1],
+				[[31, 15],3,2,0,1],
+				[[8, 24],3,0,2,1],
+				[[9, 25],1,2,0,3],
+				[[13, 29],2,3,1,0],
+				[[11, 27],3,0,2,1],
+				[[26, 10],3,2,0,1],
+				[[12, 28],3,0,2,1],
+				[[53, 54],0,1,3,2],
+				[[51, 55],1,0,2,3],
+				[[48, 50],0,3,1,2],
+				[[49, 52],2,3,1,0],
+				[[1, 17],1,2,0,3],
+				[[3, 19],1,2,0,3],
+				[[7, 23],1,2,0,3],
+				[[6, 22],1,2,0,3],
+				[[5, 21],2,3,1,0],
+				[[16, 0],1,0,2,3],
+				[[2, 18],2,1,0,3],
+				[[4, 20],1,2,0,3],
+				[[58]],
+				[[56, 60]],
+				[[]],
+				[[36]],
+				[[32]],
+				[[35]],
+				[[39]],
+				[[38]],
+				[[37]],
+				[[33]],
+				[[34]],
+				[[59]]
+			]
 		}
 	}
 }

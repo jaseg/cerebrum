@@ -1,0 +1,14 @@
+{
+	"type": "avr",
+	"version": 23,
+	"url": "http://jaseg.github.com/cerebrum",
+	"name": "bladuino",
+	"members": {
+        "led": {
+            "type": "simple-io",
+            "port": "B",
+            "pin":  5,
+			"mode": "output"
+        }
+	}
+}

@@ -36,7 +36,6 @@ class Ganglion(object):
 		"""
 		object.__setattr__(self, '_ser', ser)
 		object.__setattr__(self, 'node_id', node_id)
-		object.__setattr__(self, 'name', name)
 		if not jsonconfig:
 			# get a config
 			i=0
@@ -52,10 +51,13 @@ class Ganglion(object):
 				i += 1
 				if i > 20:
 					raise serial.serialutil.SerialException('Could not connect, giving up after 20 tries')
+		if not name:
+			name = jsonconfig.get('name')
+		object.__setattr__(self, 'name', name)
 		# populate the object
 		object.__setattr__(self, 'members', {})
 		for name, member in jsonconfig.get('members', {}).items():
-			self.members[name] = Ganglion(node_id, jsonconfig=member, ser=self._ser, name=self.name+'/'+name)
+			self.members[name] = Ganglion(node_id, jsonconfig=member, ser=self._ser, name=name)
 		object.__setattr__(self, 'properties', {})
 		for name, prop in jsonconfig.get('properties', {}).items():
 			self.properties[name] = (prop['id'], prop['fmt'], prop.get('access', 'rw'))
