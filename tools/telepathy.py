@@ -6,11 +6,13 @@ import re
 import json
 import argparse
 from collections import defaultdict
+from contextlib import contextmanager
 import requests
 import socket
 from pylibcerebrum.serial_mux import SerialMux
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_swagger import ApiParameter, SwaggerApiRegistry
+from serial.serialutil import SerialException
 
 # === Config ===
 # Interval to wait after a failed HTTP/JSONRPC request
@@ -25,6 +27,14 @@ app = Flask("cerebrum")
 registry = SwaggerApiRegistry(app, baseurl='http://'+HOSTNAME+'/cerebrum')
 
 # === Ganglion/Flask REST adapters ===
+
+@contextmanager
+def exitOnSerialException():
+	try:
+		yield
+	except SerialException:
+		print('Serial exception. Exiting.')
+		request.environ.get('werkzeug.server.shutdown')()
 
 ARGTYPES = {
 		'c': ('integer', int),
@@ -59,43 +69,37 @@ def structGenerator(fmt):
 
 class GenericGanglionAdapter:
 	def __init__(self, parent, g):
-		self.parent = parent
-		self.g = g
-		self.name = g.name
-		print('Registering', self.name, self.base_url)
-		self.members = [GANGLION_ADAPTERS[m.type](self, m) for _, m in g.members.items()]
+		with exitOnSerialException():
+			self.parent = parent
+			self.g = g
+			self.name = g.name
+			print('Registering', self.name, self.base_url)
+			self.members = [GANGLION_ADAPTERS[m.type](self, m) for _, m in g.members.items()]
 
-		@registry.register(self.base_url, endpoint=self.base_url)
+		@app.route(self.base_url, endpoint=self.base_url)
 		def api_list():
 			"""List this node's children, functions and properties."""
 			nonlocal self
-			return jsonify({'members': {m.name: {'url': m.base_url} for m in self.members},
-					'functions': list(self.g.functions.keys()),
-					'properties': list(self.g.properties.keys())})
+			with exitOnSerialException():
+				return jsonify({'members': {m.name: {'url': m.base_url} for m in self.members},
+						'functions': list(g.functions.keys()),
+						'properties': {name: list(zip(*list(structGenerator(fmt))))[0] for name, (_,fmt,_) in g.properties.items()}})
 
-		for prop, (_,fmt,_) in self.g.properties.items():
-			swaggertypes, convfuncs = zip(*list(structGenerator(fmt)))
+		for prop, (_,fmt,_) in g.properties.items():
+			_, convfuncs = zip(*list(structGenerator(fmt)))
 			uri = self.base_url +'/'+ prop
-			@registry.register(uri, endpoint=uri, method='GET')
-			@registry.register(uri, endpoint=uri,
-					method='POST',
-					parameters=[
-						ApiParameter(name='param'+str(i),
-							description='Auto-generated parameter narf',
-							required=True,
-							dataType=t,
-							paramType='query',
-							allowMultiple=False)
-						for i, t in enumerate(swaggertypes)])
+			@app.route(uri, endpoint=uri, methods=['GET', 'POST'])
 			def wrapper():
 				"""Auto-generated wrapper function. Will complain when served garbage."""
 				nonlocal self, prop
-				if request.method == 'GET':
-					return jsonify(getattr(self.g, prop.name))
-				elif request.method == 'POST':
-					data = request.json
-					assert list(data) and len(data) == len(convfuncs)
-					setattr(self.g, prop.name, [f(v) for f, v in zip(convfuncs, data)])
+				with exitOnSerialException():
+					if request.method == 'GET':
+						return jsonify(getattr(g, prop))
+					elif request.method == 'POST':
+						data = request.get_json(True)
+						assert isinstance(data, list) and len(data) == len(convfuncs)
+						setattr(g, prop, [f(v) for f, v in zip(convfuncs, data)])
+						return '{"result": "success"}\n'
 
 	@property
 	def base_url(self):
@@ -109,23 +113,25 @@ def register_ganglion_adapter(cls, ganglion_type):
 
 class GanglionRestAdapter:
 	def __init__(self, g):
-		self.name = g.config.get('name') or g.config.get('node_id')
-		#Hardware discovery
-		self.members = [GANGLION_ADAPTERS[m.type](self, g) for m in g]
+		with exitOnSerialException():
+			self.name = g.config.get('name') or g.config.get('node_id')
+			#Hardware discovery
+			self.members = [GANGLION_ADAPTERS[m.type](self, g) for m in g]
 	
 	@property
 	def base_url(self):
 		return '/cerebrum'
 
 # === Cerebrum serial port setup ===
-s = SerialMux(PORT, BAUDRATE)
-time.sleep(1)
-print('Discovering cerebrum devices')
-results = []
-while not results:
-	results = s.discover()
-print('Opening devices')
-adapters = [GanglionRestAdapter(s.open(i)) for _,i in results]
+with exitOnSerialException():
+	s = SerialMux(PORT, BAUDRATE)
+	time.sleep(1)
+	print('Discovering cerebrum devices')
+	results = []
+	while not results:
+		results = s.discover()
+	print('Opening devices')
+	adapters = [GanglionRestAdapter(s.open(i)) for _,i in results]
 
 if __name__ == '__main__':
 	app.debug = True
