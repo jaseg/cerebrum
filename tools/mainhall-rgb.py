@@ -4,6 +4,7 @@ import time
 import copy
 import json
 import requests
+import os
 from pylibcerebrum.serial_mux import SerialMux
 
 BASE_URI	= 'http://10.0.1.43/dmxacl/json/'
@@ -11,6 +12,7 @@ CBEAM		= 'http://c-beam.cbrp3.c-base.org/rpc/'
 PORT		= '/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A700fmkX-if00-port0'
 BAUDRATE	= 57600
 GAMMA		= 2.5
+CACERT		= os.path.join(os.path.dirname(__file__), 'cacert.pem')
 
 s = SerialMux(PORT, BAUDRATE)
 print('discovering cerebrum devices')
@@ -42,13 +44,13 @@ def inc_color(r,g,b):
 		v['blue']	= xform(v['blue'], b)
 	try:
 		requests.post(BASE_URI, data=json.dumps({'method': 'lightSync.push', 'params': [state], 'id': 0}))
-	except e:
+	except requests.HTTPError as e:
 		print('Cannot set DMX color:', e)
 
 def sendstate(schnur, state):
 	try:
-		requests.post(CBEAM, data=json.dumps({'method': 'barschnur', 'params': [schnur, state], 'id': 0}))
-	except e:
+		requests.post(CBEAM, data=json.dumps({'method': 'barschnur', 'params': [schnur, state], 'id': 0}), verify=CACERT)
+	except requests.HTTPError as e:
 		print('Cannot send event to c-beam:', e)
 
 oldstate = None
