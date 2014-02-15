@@ -9,6 +9,7 @@ from pylibcerebrum.serial_mux import SerialMux
 
 CBEAM			= 'http://10.0.1.27:4254/rpc/'
 HYPERBLAST		= 'http://10.0.1.23:1337/'
+CLOCC			= 'http://c-lab-lock.cbrp3.c-base.org:1337/'
 PORT			= '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_7523230313535161C072-if00'
 BAUDRATE		= 115200
 AVG_SAMPLES		= 128
@@ -32,7 +33,7 @@ print('starting event loop')
 
 #HACK ctrl-c ctrl-p -ed from barstatus.py
 barstatus = 'closed'
-lastchange = time.time()
+lastchange = time.time() - 180
 def animate():
 	global barstatus, lastchange
 	while True:
@@ -87,4 +88,5 @@ while True:
 
 		requests.post(HYPERBLAST, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
 		requests.post(CBEAM, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		requests.post(CLOCC, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
 
