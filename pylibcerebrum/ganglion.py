@@ -17,6 +17,8 @@ import serial
 from pylibcerebrum.NotifyList import NotifyList
 from pylibcerebrum.timeout_exception import TimeoutException
 
+escape = lambda s: s.replace(b'\\', b'\\\\')
+
 """Call RPC functions on serially connected devices over the Cerebrum protocol."""
 
 class Ganglion(object):
@@ -74,7 +76,7 @@ class Ganglion(object):
 	def _read_config(self):
 		"""Fetch the device configuration descriptor from the device."""
 		with self._ser as s:
-			s.write(b'\\#' + struct.pack(">H", self.node_id) + b'\x00\x00\x00\x00')
+			s.write(b'\\#' + escape(struct.pack(">H", self.node_id)) + b'\x00\x00\x00\x00')
 			(clen,) = struct.unpack(">H", s.read(2))
 			cbytes = s.read(clen)
 			#decide whether cbytes contains lzma or json depending on the first byte (which is used as a magic here)
@@ -86,11 +88,12 @@ class Ganglion(object):
 	def _callfunc(self, fid, argsfmt, args, retfmt):
 		"""Call a function on the device by id, directly passing argument/return format parameters."""
 		# Make a list out of the arguments if they are none
+		#print('calling function No. {}, args({}) {}, returning {}'.format(fid, argsfmt, args, retfmt))
 		if not (isinstance(args, tuple) or isinstance(args, list)):
 			args = [args]
 		with self._ser as s:
 			# Send the encoded data
-			cmd = b'\\#' + struct.pack(">HHH", self.node_id, fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args)
+			cmd = b'\\#' + escape(struct.pack(">HHH", self.node_id, fid, struct.calcsize(argsfmt)) + struct.pack(argsfmt, *args))
 			s.write(cmd)
 			# payload length
 			(clen,) = struct.unpack(">H", s.read(2))
