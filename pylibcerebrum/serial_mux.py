@@ -2,7 +2,7 @@
 import serial
 import threading
 import struct
-from pylibcerebrum.ganglion import Ganglion
+from pylibcerebrum.ganglion import Ganglion, escape
 from pylibcerebrum.timeout_exception import TimeoutException
 
 MAC_LEN = 64
@@ -42,7 +42,7 @@ class SerialMux(object):
 	def _send_probe(self, mac, mask, next_address):
 		#print('Discovery: mac', mac, 'mask', mask)
 		with self.ser as s:
-			s.write(b'\\#\xFF\xFF' + struct.pack('>HHQ', next_address, mask, mac))
+			s.write(b'\\#\xFF\xFF' + escape(struct.pack('>HHQ', next_address, mask, mac)))
 			timeout_tmp = s.timeout
 			s.timeout = 0.05
 			try:
