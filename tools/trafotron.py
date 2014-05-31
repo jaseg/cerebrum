@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*- 
 
 import time
 from threading import Thread
@@ -8,7 +9,7 @@ import requests
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pylibcerebrum.serial_mux import SerialMux
 
-CBEAM			= 'http://10.0.1.27:4254/rpc/'
+CBEAM			= 'http://c-beam.cbrp3.c-base.org:4254/rpc/'
 HYPERBLAST		= 'http://10.0.1.23:1337/'
 CLOCC			= 'http://c-lab-lock.cbrp3.c-base.org:1337/'
 PORT			= '/dev/serial/by-id/usb-Arduino__www.arduino.cc__0043_7523230313535161C072-if00'
@@ -81,7 +82,10 @@ animator.start()
 
 def sendstate(value):
 	print('SENDING', value)
-	requests.post(CBEAM, data=json.dumps({'method': 'trafotron', 'params': [value], 'id': 0}))
+	try:
+		requests.post(CBEAM, data=json.dumps({'method': 'trafotron', 'params': [value], 'id': 0}))
+	except requests.exceptions.ConnectionError:
+		pass
 
 class AmpelHandler(BaseHTTPRequestHandler):
 	def do_POST(self):
@@ -122,6 +126,9 @@ oldbarstate = None
 newbarstate = None
 while True:
 	val = sum([ g.analog5.analog for i in range(AVG_SAMPLES)])/AVG_SAMPLES
+	if abs(val-oldval) > SEND_THRESHOLD:
+		oldval = val
+		sendstate(int(val))
 	if g.analog4.state:
 		newbarstate = 'closed'
 	else:
@@ -133,7 +140,16 @@ while True:
 		barstatus = newbarstate
 		lastchange = time.time()
 
-		requests.post(HYPERBLAST, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
-		requests.post(CBEAM, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
-		requests.post(CLOCC, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		try:
+			requests.post(HYPERBLAST, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		except requests.exceptions.ConnectionError:
+			pass
+		try:
+			requests.post(CBEAM, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		except requests.exceptions.ConnectionError:
+			pass
+		try:
+			requests.post(CLOCC, data=json.dumps({'method': 'barstatus', 'params': [newbarstate], 'id': 0}))
+		except requests.exceptions.ConnectionError:
+			pass
 
