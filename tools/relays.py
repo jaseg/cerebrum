@@ -26,49 +26,26 @@ print('initializing device')
 print(dir(gg))
 print('starting event loop')
 
-buf = [(0,0,0)]*48
-timestamps = [0]*len(buf)
-
-def hsv2rgb(h, s, v):
-    if s == 0.0:
-        return v, v, v
-    i = int(h*6.0) # XXX assume int() truncates!
-    f = (h*6.0) - i
-    p = v*(1.0 - s)
-    q = v*(1.0 - s*f)
-    t = v*(1.0 - s*(1.0-f))
-    i = i%6
-    if i == 0:
-        return v, t, p
-    if i == 1:
-        return q, v, p
-    if i == 2:
-        return p, v, t
-    if i == 3:
-        return p, q, v
-    if i == 4:
-        return t, p, v
-    if i == 5:
-        return v, p, q
+buf = [(0,0,0)]*128
 
 def send_buf():
     while True:
-        ct = time.time()
-        for i in range(len(buf)):
-            d = ct-timestamps[i]
-            if d > STALE_THRESHOLD:
-                #buf[i] = hsv2rgb((FADE_SPEED*d + i/len(buf))%1, 1, 1)
-                buf[i] = hsv2rgb((FADE_SPEED*d)%1, 1, 1)
         try:
             gg.ws2801.buffer = [ int(v*255) for c in buf for v in c ]
         except:
             pass
         time.sleep(DELAY)
 
-t = threading.Thread(target=send_buf)
+t = threading.Thread(target=send_buf, daemon=True)
 t.start()
 
-def set_relay(relay, r, g, b):
-    buf[relay] = (r,g,b)
-    timestamps[relay] = time.time()
+while True:
+	buf = [(255,0,0)]*128
+	time.sleep(2)
+	buf = [(0,255,0)]*128
+	time.sleep(2)
+	buf = [(0,0,255)]*128
+	time.sleep(2)
+	buf = [(255,255,255)]*128
+	time.sleep(2)
 
