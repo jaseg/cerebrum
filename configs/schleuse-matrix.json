@@ -42,6 +42,46 @@
 			"port": "G",
 			"pin": 5,
             "mode": "pwm"
-		}
+		},
+        "presence1": {
+            "type": "simple-io",
+            "port": "A",
+            "pin": "0"
+        },
+        "presence2": {
+            "type": "simple-io",
+            "port": "A",
+            "pin": "1"
+        },
+        "presence3": {
+            "type": "simple-io",
+            "port": "A",
+            "pin": "2"
+        },
+        "presence4": {
+            "type": "simple-io",
+            "port": "A",
+            "pin": "3"
+        },
+        "presence5": {
+            "type": "simple-io",
+            "port": "A",
+            "pin": "4"
+        },
+        "presence6": {
+            "type": "simple-io",
+            "port": "A",
+            "pin": "5"
+        },
+        "test1": {
+            "type": "simple-io",
+            "port": "L",
+            "pin": "0"
+        },
+        "test2": {
+            "type": "simple-io",
+            "port": "B",
+            "pin": "0"
+        }
 	}
 }
