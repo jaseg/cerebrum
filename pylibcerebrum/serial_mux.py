@@ -9,8 +9,8 @@ MAC_LEN = 64
 
 class SerialMux(object):
 
-	def __init__(self, device=None, baudrate=115200, ser=None):
-		s = ser or LockableSerial(port=device, baudrate=baudrate, timeout=1)
+	def __init__(self, device=None, baudrate=115200, ser=None, timeout=1):
+		s = ser or LockableSerial(port=device, baudrate=baudrate, timeout=timeout)
 		#Trust me, without the following two lines it *wont* *work*. Fuck serial ports.
 		s.setXonXoff(True)
 		s.setXonXoff(False)
